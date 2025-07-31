@@ -153,22 +153,6 @@ class SecurityAuditEngine:
         
 
 
-
-        # if self.audit_results:
-        #     print("--- 상세 취약점 목록 ---")
-        #     for i, result in enumerate(self.audit_results):
-        #         if result['status'] == 'VULNERABLE':
-        #             print(f"[{i+1}] 모듈: {result.get('module', 'N/A')}")
-        #             print(f"    항목: {result.get('item', 'N/A')}")
-        #             print(f"    상태: {result.get('status', 'N/A')}")
-        #             print(f"    이유: {result.get('reason', 'N/A')}")
-        #             print(f"    현재 값: {result.get('current_value', 'N/A')}")
-        #             print(f"    권고 값: {result.get('recommended_value', 'N/A')}")
-        #             print("-" * 30)
-        #     print("--------------------\n")
-        # else:
-        #     print("발견된 취약점이 없습니다. 모든 항목이 양호합니다.")
-
         report_summary = {
             "총 점검 항목": total_audits,
             "취약 항목": vulnerable_count,
@@ -307,8 +291,3 @@ if __name__ == "__main__":
     engine = SecurityAuditEngine()
     engine.run_audits()
     engine.generate_report()
-
-
-
-
-
