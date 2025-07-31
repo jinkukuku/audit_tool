@@ -221,9 +221,9 @@ class ServiceManagementAudit(AuditModule):
     def check_w12_iis_cgi_execution_restriction(self):
         """
         W-12: IIS CGI 실행 제한
-        - 점검기준: CGI 스크립트 디렉터리(C:\inetpub\scripts)에 Everyone에 모든 권한, 수정 권한, 쓰기 권한이 부여되지 않은 경우 양호.
+        - 점검기준: CGI 스크립트 디렉터리(C:\\inetpub\\scripts)에 Everyone에 모든 권한, 수정 권한, 쓰기 권한이 부여되지 않은 경우 양호.
                     부여되어 있는 경우 취약.
-        - 점검방법: icacls 명령어로 C:\inetpub\scripts 디렉터리 권한 확인.
+        - 점검방법: icacls 명령어로 C:\\inetpub\\scripts 디렉터리 권한 확인.
         """
         item = "W-12. IIS CGI 실행 제한"
         cgi_script_dir = os.path.join(os.environ.get('SystemDrive', 'C:'), 'inetpub', 'scripts')
@@ -689,7 +689,7 @@ class ServiceManagementAudit(AuditModule):
         W-22: IIS Exec 명령어 쉘 호출 진단
         - 점검기준: IIS 5.0 버전에서 해당 레지스트리 값이 0이거나, IIS 6.0 버전 이상인 경우 양호.
                     IIS 5.0 버전에서 해당 레지스트리 값이 1인 경우 취약.
-        - 점검방법: 레지스트리 HKLM\SYSTEM\CurrentControlSet\Services\W3SVC\Parameters\SSIEnableCmdDirective 확인.
+        - 점검방법: 레지스트리 HKLM\\SYSTEM\\CurrentControlSet\\Services\\W3SVC\\Parameters\\SSIEnableCmdDirective 확인.
         """
         item = "W-22. IIS Exec 명령어 쉘 호출 진단"
         try:
@@ -925,7 +925,7 @@ class ServiceManagementAudit(AuditModule):
             self._record_result(item, "ERROR", f"점검 중 오류 발생: {e}")
 
     def check_w29_dns_zone_transfer(self):
-        """
+        r"""
         W-29: DNS Zone Transfer 설정
         - 점검기준: DNS 서비스를 사용하지 않거나, 영역 전송 허용을 하지 않는 경우, 또는 특정 서버로만 설정이 되어 있는 경우 양호.
                     위 3개 기준 중 하나라도 해당 되지 않는 경우 취약.
@@ -982,7 +982,7 @@ class ServiceManagementAudit(AuditModule):
             self._record_result(item, "ERROR", f"점검 중 오류 발생: {e}")
 
     def check_w30_rds_removal(self):
-        """
+        r"""
         W-30: RDS(Remote Data Services) 제거
         - 점검기준: IIS를 사용하지 않거나, Windows 2000 SP4, 2003 SP2 이상 설치, 또는 디폴트 웹 사이트에 MSADC 가상 디렉터리가 존재하지 않는 경우, 또는 해당 레지스트리 값이 존재하지 않는 경우 양호.
         - 점검방법: IIS 서비스 실행 확인 및 레지스트리 HKLM\SYSTEM\CurrentControlSet\Services\W3SVC\Parameters\ADCLaunch 확인.
@@ -1117,7 +1117,7 @@ class ServiceManagementAudit(AuditModule):
                                 recommended_value="중지 및 사용 안 함")
 
     def check_w61_snmp_community_string_complexity(self):
-        """
+        r"""
         W-61: SNMP 서비스 커뮤니티스트링의 복잡성 설정
         - 점검기준: SNMP 서비스 커뮤니티 스트링의 복잡성이 설정되어 있는 경우 양호.
         - 점검방법: 레지스트리 HKLM\SYSTEM\CurrentControlSet\Services\SNMP\Parameters\TrapConfiguration 확인. (자동 점검 어려움, 담당자 인터뷰 필요성 제시)
@@ -1168,7 +1168,7 @@ class ServiceManagementAudit(AuditModule):
             self._record_result(item, "ERROR", f"점검 중 오류 발생: {e}")
 
     def check_w62_snmp_access_control(self):
-        """
+        r"""
         W-62: SNMP Access control 설정
         - 점검기준: SNMP Access control이 적절하게 설정되어 있는 경우 양호.
         - 점검방법: 레지스트리 HKLM\SYSTEM\CurrentControlSet\Services\SNMP\Parameters\PermittedManagers 확인. (자동 점검 어려움, 담당자 인터뷰 필요성 제시)

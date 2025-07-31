@@ -126,7 +126,7 @@ class SecurityAuditEngine:
             audit_modules_to_run.append(lnx.PatchManagementAudit(self.platform_specific_config))
             audit_modules_to_run.append(lnx.LogManagementAudit(self.platform_specific_config))
         elif self.os_type == "Windows":
-            logging.info("Windows 점검 모듈은 아직 구현되지 않았습니다. (TODO)")
+            logging.info("Windows 점검 모듈을 로드합니다.")
             audit_modules_to_run.append(win.AccountManagementAudit(self.platform_specific_config))
             audit_modules_to_run.append(win.FilePermissionAudit(self.platform_specific_config))
             audit_modules_to_run.append(win.ServiceManagementAudit(self.platform_specific_config))

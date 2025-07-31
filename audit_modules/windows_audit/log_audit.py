@@ -79,7 +79,7 @@ class LogManagementAudit(AuditModule):
             self._record_result(item, "ERROR", f"점검 중 오류 발생: {e}")
 
     def check_w32_log_file_size_retention(self, log_type):
-        """
+        r"""
         W-32, W-33, W-34: 로그 파일 크기 및 보존 기간 설정
         - 점검기준: 각 로그(보안, 시스템, 응용 프로그램) 파일 크기가 2GB 이상, 보존 기간이 365일 이상으로 설정되어 있는 경우 양호.
         - 점검방법: 이벤트 뷰어 속성 또는 레지스트리 HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\[로그 유형]\MaxSize, Retention 확인.
@@ -141,7 +141,7 @@ class LogManagementAudit(AuditModule):
             self._record_result(item, "ERROR", f"점검 중 오류 발생: {e}")
 
     def check_w35_event_viewer_access_control(self):
-        """
+        r"""
         W-35: 이벤트 뷰어 접근 통제
         - 점검기준: 이벤트 뷰어에 대한 접근 권한이 적절하게 설정되어 있는 경우 양호.
         - 점검방법: 이벤트 뷰어 속성 또는 레지스트리 HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\[로그 유형]\CustomSD 확인. (수동 점검 필요성 제시)

@@ -126,7 +126,7 @@ class SecurityManagementAudit(AuditModule):
             return None
 
     def check_w37_sam_file_access_control(self):
-        """
+        r"""
         W-37: SAM 파일 접근 통제 설정
         - 점검기준: SAM 파일 접근권한에 Administrator, System 그룹만 모든 권한으로 설정되어 있는 경우 양호.
                     그 외 다른 그룹에 권한이 설정되어 있는 경우 취약.
@@ -180,7 +180,7 @@ class SecurityManagementAudit(AuditModule):
             self._record_result(item, "ERROR", f"점검 중 오류 발생: {e}")
 
     def check_w38_screensaver_settings(self):
-        """
+        r"""
         W-38: 화면보호기 설정
         - 점검기준: 화면보호기가 설정되어 있고, 10분 이내로 잠금 설정이 되어 있는 경우 양호.
                     그 외의 경우 취약.
@@ -346,7 +346,7 @@ class SecurityManagementAudit(AuditModule):
                                 current_value="사용 안 함 (0)", recommended_value="사용 (1)")
 
     def check_w43_autologon_control(self):
-        """
+        r"""
         W-43: Autologon 기능 제어
         - 점검기준: Autologon 기능이 비활성화되어 있는 경우 양호. 활성화되어 있는 경우 취약.
         - 점검방법: 레지스트리 HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\AutoAdminLogon 확인.
@@ -424,7 +424,7 @@ class SecurityManagementAudit(AuditModule):
                                 current_value="사용 (1)", recommended_value="사용 안 함 (0)")
 
     def check_w72_dos_attack_defense_registry(self):
-        """
+        r"""
         W-72: Dos 공격 방어 레지스트리 설정
         - 점검기준: Dos 공격 방어 관련 레지스트리 설정이 적절하게 설정되어 있는 경우 양호.
         - 점검방법: 레지스트리 HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\EnableDeadGWDetect, SynAttackProtect, TcpMaxPortsExhausted, TcpMaxHalfOpenRetried, TcpMaxHalfOpen, TcpMaxConnectRetransmissions 등 확인.
@@ -551,7 +551,7 @@ class SecurityManagementAudit(AuditModule):
                                 recommended_value="15분 이하")
 
     def check_w75_warning_message_settings(self):
-        """
+        r"""
         W-75: 경고 메시지 설정
         - 점검기준: 로그온 시 경고 메시지가 설정되어 있는 경우 양호.
                     설정되어 있지 않은 경우 취약.
@@ -607,7 +607,7 @@ class SecurityManagementAudit(AuditModule):
                             recommended_value="해당 사용자만 모든 권한")
 
     def check_w77_lan_manager_authentication_level(self):
-        """
+        r"""
         W-77: LAN Manager 인증 수준
         - 점검기준: "LAN Manager 인증 수준" 정책이 "NTLMv2 응답만 보내기\LM 및 NTLM 거부" 또는 "NTLMv2 응답만 보내기\LM 및 NTLM 거부"로 설정되어 있는 경우 양호.
                     그 외의 경우 취약.
@@ -768,7 +768,7 @@ class SecurityManagementAudit(AuditModule):
                                 recommended_value="불필요/의심스러운 시작프로그램 제거")
 
     def check_w82_windows_authentication_mode(self):
-        """
+        r"""
         W-82: Windows 인증 모드 사용 (SQL Server)
         - 점검기준: SQL Server가 Windows 인증 모드만 사용하도록 설정되어 있는 경우 양호.
                     혼합 모드(SQL Server 및 Windows 인증)로 설정되어 있는 경우 취약.
