@@ -7,6 +7,7 @@ import sys
 # 필요한 모듈 임포트
 from platform_utils import PlatformUtils
 import audit_modules.linux_audit as lnx
+import audit_modules.windows_audit as win
 
 # import (
 #     AccountManagementAudit,
@@ -117,7 +118,7 @@ class SecurityAuditEngine:
 
         # OS 유형에 따라 실행할 점검 모듈을 동적으로 추가
         # 현재는 Linux만 구현되어 있으므로 Linux 모듈만 추가합니다.
-        if self.os_type == "Windows":
+        if self.os_type == "Linux":
             logging.info("Linux 점검 모듈을 로드합니다.")
             audit_modules_to_run.append(lnx.AccountManagementAudit(self.platform_specific_config))
             audit_modules_to_run.append(lnx.FileDirectoryAudit(self.platform_specific_config))
@@ -126,8 +127,11 @@ class SecurityAuditEngine:
             audit_modules_to_run.append(lnx.LogManagementAudit(self.platform_specific_config))
         elif self.os_type == "Windows":
             logging.info("Windows 점검 모듈은 아직 구현되지 않았습니다. (TODO)")
-            # Windows 전용 점검 모듈을 여기에 추가
-            # audit_modules_to_run.append(WindowsAccountAudit(self.platform_specific_config))
+            audit_modules_to_run.append(win.AccountManagementAudit(self.platform_specific_config))
+            audit_modules_to_run.append(win.FilePermissionAudit(self.platform_specific_config))
+            audit_modules_to_run.append(win.ServiceManagementAudit(self.platform_specific_config))
+            audit_modules_to_run.append(win.SecurityManagementAudit(self.platform_specific_config))
+            audit_modules_to_run.append(win.LogManagementAudit(self.platform_specific_config))
         else:
             logging.warning(f"알 수 없는 OS 유형 '{self.os_type}'입니다. 실행할 점검 모듈이 없습니다.")
             return
