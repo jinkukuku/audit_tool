@@ -1,0 +1,92 @@
+{
+    "common_settings": {
+        "report_output_dir": "./audit_reports",
+        "log_level": "INFO"
+    },
+    "Linux": {
+        "account_management": {
+            "u01_sshd_config_paths": [
+                "/etc/sshd_config",
+                "/etc/ssh/sshd_config"
+            ],
+            "u02_pwquality_conf": "/etc/security/pwquality.conf",
+            "u03_pam_files": [
+                "/etc/pam.d/system-auth",
+                "/etc/pam.d/password-auth"
+            ],
+            "u04_passwd_file": "/etc/passwd",
+            "u04_shadow_file": "/etc/shadow",
+            "u49_unnecessary_accounts": ["lp", "uucp", "operator", "games", "gopher", "nscd", "nobody"],
+            "u53_system_accounts_to_check_shell": ["daemon", "bin", "sys", "adm", "lp", "uucp", "operator", "games", "gopher", "nscd", "nobody"]
+        },
+        "file_directory_management": {
+            "u07_passwd_path": "/etc/passwd",
+            "u08_shadow_path": "/etc/shadow",
+            "u09_hosts_path": "/etc/hosts",
+            "u10_inetd_conf_paths": ["/etc/inetd.conf", "/etc/xinetd.conf"],
+            "u11_syslog_conf_paths": ["/etc/syslog.conf", "/etc/rsyslog.conf"],
+            "u12_services_path": "/etc/services",
+            "u13_suid_sgid_search_paths": ["/bin", "/usr/bin", "/sbin", "/usr/sbin"],
+            "u14_env_files_to_check": [".profile", ".bashrc", ".bash_profile", ".login", ".cshrc", ".kshrc"],
+            "u15_world_writable_search_paths": ["/home", "/tmp", "/var/tmp"],
+            "u16_dev_path": "/dev",
+            "u17_rhosts_files": ["/etc/hosts.equiv"],
+            "u18_network_config_files": ["/etc/hosts.deny", "/etc/hosts.allow"]
+        },
+        "service_management": {
+            "u19_finger_config_paths": ["/etc/inetd.conf", "/etc/xinetd.d/finger"],
+            "u20_ftp_config_paths": ["/etc/passwd", "/etc/vsftpd/vsftpd.conf", "/etc/proftpd.conf"],
+            "u21_r_services_paths": ["/etc/inetd.conf", "/etc/xinetd.d/rsh", "/etc/xinetd.d/rlogin", "/etc/xinetd.d/rexec"],
+            "u22_cron_paths": ["/usr/bin/crontab", "/etc/crontab", "/etc/cron.hourly", "/etc/cron.daily", "/etc/cron.weekly", "/etc/cron.monthly", "/etc/cron.allow", "/etc/cron.deny"],
+            "u23_dos_vulnerable_services_paths": ["/etc/inetd.conf", "/etc/xinetd.d/echo", "/etc/xinetd.d/discard", "/etc/xinetd.d/daytime", "/etc/xinetd.d/chargen"],
+            "u24_nfs_check_commands": ["ps -ef | egrep \"nfs|statd|lockd\""],
+            "u25_nfs_exports_path": "/etc/exports",
+            "u26_automount_check_commands": ["ps -f | grep automount", "ps -f | grep autofs"],
+            "u27_rpc_config_paths": ["/etc/inetd.conf", "/etc/xinetd.d/rpc.*"],
+            "u28_nis_check_commands": ["ps -ef | grep ypserv", "ps -ef | grep ypbind"],
+            "u29_tftp_talk_paths": ["/etc/inetd.conf", "/etc/xinetd.d/tftp", "/etc/xinetd.d/talk", "/etc/xinetd.d/ntalk"],
+            "u30_smtp_check_commands": {
+                "sendmail": "echo \\$Z | /usr/lib/sendmail -bt -d0",
+                "postfix": "postconf -d mail_version",
+                "exim": "exim -bV"
+            },
+            "u31_smtp_relay_paths": ["/etc/mail/sendmail.mc", "/etc/postfix/main.cf", "/etc/exim/exim.conf", "/etc/mail/access"],
+            "u32_sendmail_exec_paths": ["/etc/mail/sendmail.cf", "/usr/sbin/postsuper"],
+            "u33_dns_check_commands": ["named -v", "ps -ef | grep named"],
+            "u34_dns_zone_transfer_paths": ["/etc/named.conf", "/etc/named.boot"],
+            "u35_apache_httpd_conf_paths": ["/etc/httpd/conf/httpd.conf", "/etc/apache2/apache2.conf"],
+            "u36_apache_user_group_paths": ["/etc/httpd/conf/httpd.conf", "/etc/apache2/apache2.conf"],
+            "u37_apache_allowoverride_paths": ["/etc/httpd/conf/httpd.conf", "/etc/apache2/apache2.conf"],
+            "u38_apache_unnecessary_files_dirs": ["/usr/local/apache/htdocs/manual", "/usr/local/apache/manual", "/var/www/html/manual"],
+            "u39_apache_symlinks_paths": ["/etc/httpd/conf/httpd.conf", "/etc/apache2/apache2.conf"],
+            "u40_apache_limit_request_body_paths": ["/etc/httpd/conf/httpd.conf", "/etc/apache2/apache2.conf"],
+            "u41_apache_document_root_paths": ["/etc/httpd/conf/httpd.conf", "/etc/apache2/apache2.conf"],
+            "u60_telnet_ftp_paths": ["/etc/inetd.conf", "/etc/xinetd.d/telnet", "/etc/xinetd.d/ftp"],
+            "u61_ftp_service_check_commands": ["ps -ef | grep 'proftp'", "ps -ef | grep 'vsftp'", "cat /etc/inetd.conf | grep 'ftp'"],
+            "u62_ftp_shell_path": "/etc/passwd",
+            "u63_ftpusers_paths": ["/etc/ftpusers", "/etc/ftpd/ftpusers", "/etc/vsftpd/ftpusers", "/etc/vsftpd/user_list"],
+            "u64_ftpusers_config_paths": ["/etc/ftpusers", "/etc/ftpd/ftpusers", "/etc/proftpd.conf", "/etc/vsftpd/vsftpd.conf", "/etc/vsftpd.ftpusers", "/etc/vsftpd.user_list"],
+            "u65_at_paths": ["/usr/bin/at", "/etc/at.allow", "/etc/at.deny"],
+            "u66_snmpd_check_commands": ["ps -ef | grep snmpd"],
+            "u67_snmpd_conf_path": "/etc/snmp/conf/snmpd.conf",
+            "u68_login_banner_paths": ["/etc/motd", "/etc/issue", "/etc/issue.net", "/etc/ftpd/ftpaccess", "/etc/vsftpd/vsftpd.conf", "/etc/proftpd.conf", "/etc/mail/sendmail.cf", "/etc/postfix/main.cf", "/etc/named.conf"],
+            "u69_nfs_exports_path": "/etc/exports",
+            "u70_smtp_expn_vrfy_paths": ["/etc/mail/sendmail.cf", "/etc/postfix/main.cf"],
+            "u71_apache_info_paths": ["/etc/httpd/conf/httpd.conf", "/etc/apache2/apache2.conf"]
+        },
+        "patch_management": {
+            "u42_os_release_files": ["/etc/os-release", "/etc/redhat-release", "/etc/lsb-release"]
+        },
+        "log_management": {
+            "u72_rsyslog_conf_path": "/etc/rsyslog.conf"
+        }
+    },
+    "Windows": {
+        "account_management": {},
+        "file_directory_management": {},
+        "service_management": {},
+        "patch_management": {},
+        "log_management": {}
+    }
+}
+
