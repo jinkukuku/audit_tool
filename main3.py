@@ -295,3 +295,5 @@ if __name__ == "__main__":
     engine = SecurityAuditEngine()
     engine.run_audits()
     engine.generate_report()
+    print("점검 결과 확인을 완료하면 Enter 키를 누르시오.")
+    input()
