@@ -274,9 +274,19 @@ class SecurityAuditEngine:
         print(f"\n\n상세 결과 : ./audit_reports/security_audit_report_{PlatformUtils.get_os_type()}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
 
 
+def debug_print(message):
+    """
+    디버깅 메시지를 쉽게 출력하기 위한 함수입니다.
+    터미널에서 프로그램을 실행할 때 어떤 단계까지 진행되었는지 확인할 수 있습니다.
+    """
+    print(f"[DEBUG] {message}")
+
+
+
+
 if __name__ == "__main__":
-    # 스크립트가 실행될 때 현재 작업 디렉토리에 audit_modules 폴더가 있는지 확인
-    # sys.path에 현재 디렉토리 추가 (IDE나 일부 환경에서 모듈을 찾지 못할 경우 대비)
+
+    print("점검을 시작합니다. 잠시만 기다려주세요.")
     current_script_dir = os.path.dirname(os.path.abspath(__file__))
     if current_script_dir not in sys.path:
         sys.path.insert(0, current_script_dir)
@@ -295,5 +305,9 @@ if __name__ == "__main__":
     engine = SecurityAuditEngine()
     engine.run_audits()
     engine.generate_report()
-    print("점검 결과 확인을 완료하면 Enter 키를 누르시오.")
+
+    # --- 프로그램이 바로 꺼지는 것을 방지하는 코드 ---
+    # 이 코드는 콘솔 창이 바로 닫히지 않도록 잠시 대기시켜 줍니다.
+    debug_print("프로그램이 종료되기 전, 잠시 대기합니다.")
+    print("Press Enter to exit...")
     input()
