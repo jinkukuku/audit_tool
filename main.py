@@ -6,7 +6,6 @@ import sys
 
 # 필요한 모듈 임포트
 from platform_utils import PlatformUtils
-import audit_modules.linux_audit as lnx
 
 # import (
 #     AccountManagementAudit,
@@ -17,33 +16,17 @@ import audit_modules.linux_audit as lnx
 # )
 
 class SecurityAuditEngine:
-    RISK_LEVEL_MAPPING = {
-        "U-01": "상", "U-02": "상", "U-03": "상", "U-04": "상", "U-05": "상",
-        "U-06": "상", "U-07": "상", "U-08": "상", "U-09": "상", "U-10": "상",
-        "U-11": "상", "U-12": "상", "U-13": "상", "U-14": "상", "U-15": "상",
-        "U-16": "상", "U-17": "상", "U-18": "상", "U-19": "상", "U-20": "상",
-        "U-21": "상", "U-22": "상", "U-23": "상", "U-24": "상", "U-25": "상",
-        "U-26": "상", "U-27": "상", "U-28": "상", "U-29": "상", "U-30": "상",
-        "U-31": "상", "U-32": "상", "U-33": "상", "U-34": "상", "U-35": "상",
-        "U-36": "상", "U-37": "상", "U-38": "상", "U-39": "상", "U-40": "상",
-        "U-41": "상", "U-42": "상", "U-43": "상",
-        "U-44": "중", "U-46": "중", "U-47": "중", "U-48": "중", "U-52": "중",
-        "U-56": "중", "U-57": "중", "U-58": "중", "U-60": "중", "U-62": "중",
-        "U-64": "중", "U-65": "중", "U-66": "중", "U-67": "중", "U-69": "중",
-        "U-70": "중", "U-71": "중",
-        "U-45": "하", "U-49": "하", "U-50": "하", "U-51": "하", "U-53": "하",
-        "U-54": "하", "U-55": "하", "U-59": "하", "U-61": "하", "U-63": "하",
-        "U-68": "하", "U-72": "하"
-    }
-
-
     def __init__(self, config_file='audit_config.json'):
         self.config_file = config_file
         self.config = {}
         self.os_type = PlatformUtils.get_os_type()
+        self.common_os_type =""
+        if self.os_type == "Windows":
+            self.common_os_type = "Windows"
+        else :
+            self.common_os_type = "Linux"
         self.platform_specific_config = {}
         self.audit_results = [] # 모든 점검 모듈의 결과를 취합할 리스트
-
         self._setup_logging()
         self.load_configuration()
 
@@ -82,23 +65,32 @@ class SecurityAuditEngine:
         """
         정의된 점검 모듈들을 실행합니다.
         """
+        if self.common_os_type == "Linux":
+            import audit_modules.linux_audit as lnx
+        if self.os_type == "Windows":
+            import audit_modules.windows_audit as win
+
+
         logging.info("보안 점검을 시작합니다.")
         
         audit_modules_to_run = [] # 점검 모듈 인스턴스들을 담을 빈 리스트 생성
 
         # OS 유형에 따라 실행할 점검 모듈을 동적으로 추가
         # 현재는 Linux만 구현되어 있으므로 Linux 모듈만 추가합니다.
-        if self.os_type == "Linux":
+        if self.common_os_type == "Linux": #Solaris 구현 필요 ★★★★★★★★★★★★★
             logging.info("Linux 점검 모듈을 로드합니다.")
             audit_modules_to_run.append(lnx.AccountManagementAudit(self.platform_specific_config))
+            audit_modules_to_run.append(lnx.LogManagementAudit(self.platform_specific_config))
             audit_modules_to_run.append(lnx.FileDirectoryAudit(self.platform_specific_config))
             audit_modules_to_run.append(lnx.ServiceManagementAudit(self.platform_specific_config))
-            audit_modules_to_run.append(lnx.PatchManagementAudit(self.platform_specific_config))
             audit_modules_to_run.append(lnx.LogManagementAudit(self.platform_specific_config))
-        elif self.os_type == "Windows":
-            logging.info("Windows 점검 모듈은 아직 구현되지 않았습니다. (TODO)")
-            # Windows 전용 점검 모듈을 여기에 추가
-            # audit_modules_to_run.append(WindowsAccountAudit(self.platform_specific_config))
+        elif self.common_os_type == "Windows":
+            logging.info("Windows 점검 모듈을 로드합니다.")
+            audit_modules_to_run.append(win.AccountManagementAudit(self.platform_specific_config))
+            audit_modules_to_run.append(win.FilePermissionAudit(self.platform_specific_config))
+            audit_modules_to_run.append(win.ServiceManagementAudit(self.platform_specific_config))
+            audit_modules_to_run.append(win.SecurityManagementAudit(self.platform_specific_config))
+            audit_modules_to_run.append(win.LogManagementAudit(self.platform_specific_config))
         else:
             logging.warning(f"알 수 없는 OS 유형 '{self.os_type}'입니다. 실행할 점검 모듈이 없습니다.")
             return
@@ -124,88 +116,149 @@ class SecurityAuditEngine:
         
 
 
-
-        # if self.audit_results:
-        #     print("--- 상세 취약점 목록 ---")
-        #     for i, result in enumerate(self.audit_results):
-        #         if result['status'] == 'VULNERABLE':
-        #             print(f"[{i+1}] 모듈: {result.get('module', 'N/A')}")
-        #             print(f"    항목: {result.get('item', 'N/A')}")
-        #             print(f"    상태: {result.get('status', 'N/A')}")
-        #             print(f"    이유: {result.get('reason', 'N/A')}")
-        #             print(f"    현재 값: {result.get('current_value', 'N/A')}")
-        #             print(f"    권고 값: {result.get('recommended_value', 'N/A')}")
-        #             print("-" * 30)
-        #     print("--------------------\n")
-        # else:
-        #     print("발견된 취약점이 없습니다. 모든 항목이 양호합니다.")
-
-
-        # 보고서를 파일로 저장하는 기능은 유지 (로그는 출력되지 않음)
-        output_dir = self.config.get('common_settings', {}).get('report_output_dir', './audit_reports')
-        os.makedirs(output_dir, exist_ok=True)
-        report_file = os.path.join(output_dir, f"security_audit_report_{PlatformUtils.get_os_type()}_report.json")
-        
-        try:
-            # json.dump()를 사용하여 딕셔너리 리스트를 JSON 형식으로 파일에 씁니다.
-            with open(report_file, 'w', encoding='utf-8') as f:
-                json.dump(self.audit_results, f, indent=4, ensure_ascii=False)
-            # logging.info(f"상세 보고서가 '{report_file}'에 저장되었습니다.")
-        except Exception as e:
-            logging.critical(f"오류: 보고서 저장 중 오류 발생: {e}. 프로그램을 종료합니다.")
-            sys.exit(1)
-        
-#-----------------점검 요약---------------------
         report_summary = {
             "총 점검 항목": total_audits,
             "취약 항목": vulnerable_count,
             "양호 항목": total_audits - vulnerable_count
         }
 
-        print("\n------- 점검 요약 -------")
+        print("\n--- 점검 요약 ---")
         for key, value in report_summary.items():
             print(f"{key}: {value}")
-
-        print('\n- 위험도별 취약점 개수 -')
+        print("\n")
         
+                # 위험도 및 분류 항목별 취약점 개수 초기화
+        risk_levels = ["상", "중", "하", "총계"]
+        categories_for_display = {
+            "Linux" :   [
+                "계정 관리", "파일 및 디렉터리 관리", "서비스 관리",
+                "패치 관리","로그 관리", "총계"
+            ],
+            "Windows" : [
+                "계정 관리", "공유 권한 및 사용자 그룹 설정", "서비스 관리", 
+                "패치 관리", "로그 관리", "보안 관리", "총계"
+            ]
+        }
 
-        # 위험도별 취약 항목 개수 초기화
-        high_risk_vulnerabilities = 0
-        medium_risk_vulnerabilities = 0
-        low_risk_vulnerabilities = 0
+        
+        # 모든 위험도-분류 항목 조합에 대해 0으로 초기화
+        vulnerability_counts = {
+            risk: {category: 0 for category in categories_for_display[self.common_os_type]}
+            for risk in risk_levels
+        }
 
-        # 각 점검 항목의 U-XX 코드를 추출하고 위험도에 따라 분류합니다.
+
+
+        # 각 점검 항목의 U-XX 코드를 추출하고 위험도 및 분류에 따라 분류합니다. ■■■■■■■■■■■■■■■수정■■■■■■■■■■■■■
         for result in self.audit_results:
             if result['status'] == 'VULNERABLE':
                 item_name = result.get('item', '')
                 # 'U-XX. 항목 이름' 형식에서 'U-XX' 부분만 추출
                 u_code = item_name.split('.')[0].strip()
+                risk_level = self.config.get(self.common_os_type,{}).get("RISK_LEVEL_MAPPING").get(u_code)
+                category = self.config.get(self.common_os_type,{}).get("CATEGORY_MAPPING").get(u_code)
 
-                # 추출된 U-XX 코드를 기반으로 위험도 분류
-                risk_level = self.RISK_LEVEL_MAPPING.get(u_code)
                 
-                if risk_level == "상":
-                    high_risk_vulnerabilities += 1
-                elif risk_level == "중":
-                    medium_risk_vulnerabilities += 1
-                elif risk_level == "하":
-                    low_risk_vulnerabilities += 1
+                if risk_level and category and risk_level in risk_levels and category in categories_for_display[self.common_os_type]:
+                    vulnerability_counts[risk_level][category] += 1
                 # else:
                     # 매핑에 없는 항목은 무시하거나, 필요에 따라 로깅할 수 있습니다.
-                    # logging.warning(f"경고: 알 수 없는 U-XX 코드 '{u_code}'에 대한 위험도 정보가 없습니다.")
+                    # logging.warning(f"경고: 알 수 없는 U-XX 코드 '{u_code}'에 대한 위험도 또는 분류 정보가 없습니다.")
+                                                                                                
+        # 보고서 헤더 및 데이터 출력 (더 깔끔한 형식으로 변경)
+        # 각 분류 항목 헤더의 최대 너비 계산 (최소 10칸 확보)
+        # 헤더와 데이터의 최대 길이를 고려하여 너비를 동적으로 조정
+        col_widths = {cat: max(len(cat), 10) for cat in categories_for_display[self.common_os_type]}
+        
+        # '상/중/하' 열의 너비 설정
+        risk_label_width = 3 # "상", "중", "하" + 여백
 
-        # 요청에 따라 위험도별 취약 항목 개수만 출력
-        print(f"상 : {high_risk_vulnerabilities}개")
-        print(f"중 : {medium_risk_vulnerabilities}개")
-        print(f"하 : {low_risk_vulnerabilities}개")
+        # 헤더 출력
+        header_parts = [" " * risk_label_width] # 첫 번째 빈 칸
+        for cat in categories_for_display[self.common_os_type]:
+            header_parts.append(f"{cat:^{col_widths[cat]}}") # 중앙 정렬
+        print(" | ".join(header_parts))
 
-        print("-------------------------\n")
-        print(f"상세결과 : ./audit_reports/security_audit_report_{self.os_type}_report.json\n")
+        # 구분선 출력
+        separator_parts = ["-" * risk_label_width]
+        for cat in categories_for_display[self.common_os_type]:
+            separator_parts.append("-" * (col_widths[cat] + 5))
+        print("-+-".join(separator_parts))
+
+
+        column_total = {category: 0 for category in categories_for_display[self.common_os_type]}
+        # entire_total = 0
+        for risk in risk_levels:
+            data_parts = [f"{risk:<{risk_label_width}}"] # 좌측 정렬
+            row_total = 0 # 각 행의 합계를 저장할 변수 초기화
+            for category in categories_for_display[self.common_os_type]:
+                if risk != "총계" :
+                    if category != "총계" :
+                        count = vulnerability_counts[risk][category]
+                        data_parts.append(f"{str(count):^{col_widths[category]}}") # 중앙 정렬
+                        row_total += count # 현재 카테고리의 값을 행의 합계에 더합니다.
+                    else:
+                        data_parts.append(f"{str(row_total):^{col_widths[category]}}")
+                        vulnerability_counts[risk][category] = row_total
+                    column_total[category] += vulnerability_counts[risk][category] # 컬럼 합 계산
+                else:
+                    data_parts.append(f"{str(column_total[category]):^{col_widths[category]}}")
+            
+            # entire_total += row_total
+            print("  |    ".join(data_parts))
+
+
+
+
+
+        # 상세 보고서를 파일로 저장하는 기능은 유지 (로그는 출력되지 않음)
+        output_dir = self.config.get('common_settings', {}).get('report_output_dir', './audit_reports')
+        os.makedirs(output_dir, exist_ok=True)
+        report_file = os.path.join(output_dir, f"security_audit_report_{PlatformUtils.get_os_type()}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+        
+        try:
+            with open(report_file, 'w', encoding='utf-8') as f:
+                json.dump(self.audit_results, f, indent=4, ensure_ascii=False)
+            # logging.info(f"상세 보고서가 '{report_file}'에 저장되었습니다.")
+        except Exception as e:
+            logging.critical(f"오류: 보고서 저장 중 오류 발생: {e}. 프로그램을 종료합니다.")
+            sys.exit(1)
+
+
+        print(f"\n\n상세 결과 : ./audit_reports/security_audit_report_{PlatformUtils.get_os_type()}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+
+
+
+# import ctypes
+
+# def run_as_admin():
+#     """
+#     현재 프로세스가 관리자 권한인지 확인하고,
+#     아니라면 관리자 권한으로 재실행.
+#     """
+#     try:
+#         # 관리자 권한 여부 확인
+#         is_admin = ctypes.windll.shell32.IsUserAnAdmin()
+#     except:
+#         is_admin = False
+
+#     if not is_admin:
+#         # 관리자 권한 요청
+#         try:
+#             ctypes.windll.shell32.ShellExecuteW(
+#                 None, "runas", sys.executable, " ".join(sys.argv), None, 1
+#             )
+#         except Exception as e:
+#             print(f"[에러] 관리자 권한 요청 실패: {e}")
+#         sys.exit(0)  # 기존 프로세스 종료
+
 
 
 if __name__ == "__main__":
-    # 스크립트가 실행될 때 현재 작업 디렉토리에 audit_modules 폴더가 있는지 확인
-    # sys.path에 현재 디렉토리 추가 (IDE나 일부 환경에서 모듈을 찾지 못할 경우 대비)
+
+    # 관리자 권한 체크 후 재실행
+    # run_as_admin()
+ 
     current_script_dir = os.path.dirname(os.path.abspath(__file__))
     if current_script_dir not in sys.path:
         sys.path.insert(0, current_script_dir)
@@ -221,12 +274,12 @@ if __name__ == "__main__":
         logging.error(f"오류: '{audit_modules_path}/__init__.py' 파일이 없습니다. 패키지 구조가 올바른지 확인해주세요.")
         sys.exit(1)
 
+    
     engine = SecurityAuditEngine()
+    print(f"{engine.os_type}점검을 시작합니다. 잠시만 기다려주세요.")
     engine.run_audits()
     engine.generate_report()
 
-
-
-
-
+    print("Press Enter to exit...")
+    input()
 
