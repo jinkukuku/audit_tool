@@ -7,6 +7,7 @@ import sys
 # 필요한 모듈 임포트
 from platform_utils import PlatformUtils
 
+# 
 
 
 class SecurityAuditEngine:
@@ -30,9 +31,9 @@ class SecurityAuditEngine:
         """
         로깅 설정을 초기화합니다.
         """
-        log_level_str = self.config.get('common_settings', {}).get('log_level', 'CRITICAL').upper()
+        log_level_str = self.config.get('common_settings', {}).get('log_level', 'ERROR').upper()
         log_level = getattr(logging, log_level_str, logging.INFO)
-        logging.basicConfig(level=log_level, format='%(asctime)s - %(levelname)s - %(message)s')
+        logging.basicConfig(filename='./debug.log', level=log_level, format='%(asctime)s - %(levelname)s - %(message)s')
 
     def load_configuration(self):
         """
@@ -81,7 +82,6 @@ class SecurityAuditEngine:
                 audit_modules_to_run.append(lnx.LogManagementAudit(self.platform_specific_config))
                 audit_modules_to_run.append(lnx.FileDirectoryAudit(self.platform_specific_config))
                 audit_modules_to_run.append(lnx.ServiceManagementAudit(self.platform_specific_config))
-                audit_modules_to_run.append(lnx.LogManagementAudit(self.platform_specific_config))
         elif self.common_os_type == "Windows":
             logging.info("Windows 점검 모듈을 로드합니다.")
             audit_modules_to_run.append(win.AccountManagementAudit(self.platform_specific_config))
@@ -232,7 +232,7 @@ class SecurityAuditEngine:
         print(f"\n\n상세 결과 : ./audit_reports/security_audit_report_{PlatformUtils.get_os_type()}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
 
         # self._persist_to_json()          
-        # self._persist_to_sqlite()
+        self._persist_to_sqlite()
 
 
     # JSON 저장
@@ -284,23 +284,23 @@ class SecurityAuditEngine:
         )
         """)
 
-        # 파일 로드 성공/실패 경로
-        cur.execute("""
-        CREATE TABLE IF NOT EXISTS paths_success (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            run_id INTEGER,
-            path TEXT,
-            FOREIGN KEY(run_id) REFERENCES run_metadata(run_id)
-        )
-        """)
-        cur.execute("""
-        CREATE TABLE IF NOT EXISTS paths_fail (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            run_id INTEGER,
-            path TEXT,
-            FOREIGN KEY(run_id) REFERENCES run_metadata(run_id)
-        )
-        """)
+        # # 파일 로드 성공/실패 경로
+        # cur.execute("""
+        # CREATE TABLE IF NOT EXISTS paths_success (
+        #     id INTEGER PRIMARY KEY AUTOINCREMENT,
+        #     run_id INTEGER,
+        #     path TEXT,
+        #     FOREIGN KEY(run_id) REFERENCES run_metadata(run_id)
+        # )
+        # """)
+        # cur.execute("""
+        # CREATE TABLE IF NOT EXISTS paths_fail (
+        #     id INTEGER PRIMARY KEY AUTOINCREMENT,
+        #     run_id INTEGER,
+        #     path TEXT,
+        #     FOREIGN KEY(run_id) REFERENCES run_metadata(run_id)
+        # )
+        # """)
 
         total = len(self.audit_results)
         vulnerable = sum(1 for r in self.audit_results if r.get("status") == "VULNERABLE")
@@ -340,11 +340,11 @@ class SecurityAuditEngine:
                 risk
             ))
 
-        # 성공/실패 경로 insert
-        for p in self.success_paths:
-            cur.execute("INSERT INTO paths_success(run_id, path) VALUES(?,?)", (run_id, p))
-        for p in self.fail_paths:
-            cur.execute("INSERT INTO paths_fail(run_id, path) VALUES(?,?)", (run_id, p))
+        # # 성공/실패 경로 insert
+        # for p in self.success_paths:
+        #     cur.execute("INSERT INTO paths_success(run_id, path) VALUES(?,?)", (run_id, p))
+        # for p in self.fail_paths:
+        #     cur.execute("INSERT INTO paths_fail(run_id, path) VALUES(?,?)", (run_id, p))
 
         conn.commit()
         conn.close()
