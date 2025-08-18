@@ -7,13 +7,7 @@ import sys
 # 필요한 모듈 임포트
 from platform_utils import PlatformUtils
 
-# import (
-#     AccountManagementAudit,
-#     FileDirectoryAudit,
-#     ServiceManagementAudit,
-#     PatchManagementAudit,
-#     LogManagementAudit
-# )
+
 
 class SecurityAuditEngine:
     def __init__(self, config_file='audit_config.json'):
@@ -21,6 +15,8 @@ class SecurityAuditEngine:
         self.config = {}
         self.os_type = PlatformUtils.get_os_type()
         self.common_os_type =""
+        self.success_paths = []
+        self.fail_paths = []
         if self.os_type == "Windows":
             self.common_os_type = "Windows"
         else :
@@ -70,7 +66,6 @@ class SecurityAuditEngine:
         if self.os_type == "Windows":
             import audit_modules.windows_audit as win
 
-
         logging.info("보안 점검을 시작합니다.")
         
         audit_modules_to_run = [] # 점검 모듈 인스턴스들을 담을 빈 리스트 생성
@@ -78,12 +73,15 @@ class SecurityAuditEngine:
         # OS 유형에 따라 실행할 점검 모듈을 동적으로 추가
         # 현재는 Linux만 구현되어 있으므로 Linux 모듈만 추가합니다.
         if self.common_os_type == "Linux": #Solaris 구현 필요 ★★★★★★★★★★★★★
-            logging.info("Linux 점검 모듈을 로드합니다.")
-            audit_modules_to_run.append(lnx.AccountManagementAudit(self.platform_specific_config))
-            audit_modules_to_run.append(lnx.LogManagementAudit(self.platform_specific_config))
-            audit_modules_to_run.append(lnx.FileDirectoryAudit(self.platform_specific_config))
-            audit_modules_to_run.append(lnx.ServiceManagementAudit(self.platform_specific_config))
-            audit_modules_to_run.append(lnx.LogManagementAudit(self.platform_specific_config))
+            if os.geteuid() != 0:
+                print("root권한으로 실행해주시길 바랍니다.")
+            else:
+                audit_modules_to_run.append(lnx.GetSystemFile(self.os_type))
+                audit_modules_to_run.append(lnx.AccountManagementAudit(self.os_type,self.platform_specific_config))
+                audit_modules_to_run.append(lnx.LogManagementAudit(self.platform_specific_config))
+                audit_modules_to_run.append(lnx.FileDirectoryAudit(self.platform_specific_config))
+                audit_modules_to_run.append(lnx.ServiceManagementAudit(self.platform_specific_config))
+                audit_modules_to_run.append(lnx.LogManagementAudit(self.platform_specific_config))
         elif self.common_os_type == "Windows":
             logging.info("Windows 점검 모듈을 로드합니다.")
             audit_modules_to_run.append(win.AccountManagementAudit(self.platform_specific_config))
@@ -100,6 +98,12 @@ class SecurityAuditEngine:
                 logging.info(f"모듈 실행: {audit_module.module_name}")
                 module_results = audit_module.run_audit() # 모듈의 run_audit() 메서드 호출
                 self.audit_results.extend(module_results) # 결과 취합
+                
+                # GetSystemFile의  Success/Fail 경로 수집
+                if audit_module.module_name == "시스템 파일 로드":
+                    self.success_paths = audit_module.success_path
+                    self.fail_paths = audit_module.fail_path
+
             except Exception as e:
                 logging.error(f"점검 모듈 '{audit_module.module_name}' 실행 중 오류 발생: {e}")
 
@@ -227,30 +231,167 @@ class SecurityAuditEngine:
 
         print(f"\n\n상세 결과 : ./audit_reports/security_audit_report_{PlatformUtils.get_os_type()}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
 
+        # self._persist_to_json()          
+        # self._persist_to_sqlite()
 
 
-# import ctypes
+    # JSON 저장
+    def _persist_to_json(self, out_path="audit_results.json"):
+        payload = {
+            "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+            "os_type": self.os_type,
+            "results": self.audit_results,
+            "success_paths": self.success_paths,
+            "fail_paths": self.fail_paths
+        }
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+        logging.info(f"점검결과 JSON 저장 완료: {out_path}")
 
-# def run_as_admin():
-#     """
-#     현재 프로세스가 관리자 권한인지 확인하고,
-#     아니라면 관리자 권한으로 재실행.
-#     """
-#     try:
-#         # 관리자 권한 여부 확인
-#         is_admin = ctypes.windll.shell32.IsUserAnAdmin()
-#     except:
-#         is_admin = False
+    # main.py - 새 메서드: SQLite 저장
+    def _persist_to_sqlite(self, db_path="audit_results.db"):
+        import sqlite3
+        conn = sqlite3.connect(db_path)
+        cur = conn.cursor()
 
-#     if not is_admin:
-#         # 관리자 권한 요청
-#         try:
-#             ctypes.windll.shell32.ShellExecuteW(
-#                 None, "runas", sys.executable, " ".join(sys.argv), None, 1
-#             )
-#         except Exception as e:
-#             print(f"[에러] 관리자 권한 요청 실패: {e}")
-#         sys.exit(0)  # 기존 프로세스 종료
+        # 실행(런) 단위 메타
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS run_metadata (
+            run_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT,
+            os_type TEXT,
+            total INTEGER,
+            vulnerable INTEGER,
+            passed INTEGER,
+            unknown INTEGER
+        )
+        """)
+
+        # 개별 점검 결과
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS audits (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id INTEGER,
+            code TEXT,
+            item TEXT,
+            status TEXT,
+            reason TEXT,
+            current_value TEXT,
+            evidence TEXT,
+            category TEXT,
+            risk TEXT,
+            FOREIGN KEY(run_id) REFERENCES run_metadata(run_id)
+        )
+        """)
+
+        # 파일 로드 성공/실패 경로
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS paths_success (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id INTEGER,
+            path TEXT,
+            FOREIGN KEY(run_id) REFERENCES run_metadata(run_id)
+        )
+        """)
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS paths_fail (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id INTEGER,
+            path TEXT,
+            FOREIGN KEY(run_id) REFERENCES run_metadata(run_id)
+        )
+        """)
+
+        total = len(self.audit_results)
+        vulnerable = sum(1 for r in self.audit_results if r.get("status") == "VULNERABLE")
+        passed = sum(1 for r in self.audit_results if r.get("status") == "SAFE")
+        unknown = sum(1 for r in self.audit_results if r.get("status") == "UNKNOWN")
+
+        ts = datetime.datetime.utcnow().isoformat() + "Z"
+        cur.execute(
+            "INSERT INTO run_metadata(timestamp, os_type, total, vulnerable, passed, unknown) VALUES(?,?,?,?,?,?)",
+            (ts, self.os_type, total, vulnerable, passed, unknown)
+        )
+        run_id = cur.lastrowid
+
+        # 카테고리/리스크 매핑
+        mapping = self.config.get(self.common_os_type, {})
+        category_map = mapping.get("CATEGORY_MAPPING", {}) or {}
+        risk_map = mapping.get("RISK_LEVEL_MAPPING", {}) or {}
+
+        # 개별 결과 insert
+        for r in self.audit_results:
+            item = r.get("item","")
+            code = item.split('.')[0].strip() if item.startswith("U-") else ""
+            category = category_map.get(code, "")
+            risk = risk_map.get(code, "")
+            cur.execute("""
+                INSERT INTO audits(run_id, code, item, status, reason, current_value, evidence, category, risk)
+                VALUES(?,?,?,?,?,?,?,?,?)
+            """, (
+                run_id,
+                code,
+                item,
+                r.get("status",""),
+                r.get("reason",""),
+                r.get("current_value",""),
+                json.dumps(r.get("evidence",""), ensure_ascii=False) if not isinstance(r.get("evidence",""), str) else r.get("evidence",""),
+                category,
+                risk
+            ))
+
+        # 성공/실패 경로 insert
+        for p in self.success_paths:
+            cur.execute("INSERT INTO paths_success(run_id, path) VALUES(?,?)", (run_id, p))
+        for p in self.fail_paths:
+            cur.execute("INSERT INTO paths_fail(run_id, path) VALUES(?,?)", (run_id, p))
+
+        conn.commit()
+        conn.close()
+        logging.info(f"SQLite 저장 완료: {db_path}")
+
+
+
+
+
+    # main.py - 새 메서드 추가: U-코드 보정        
+    def _ensure_full_u_codes(self):
+        """
+        config의 CATEGORY/RISK 매핑 키(U-01~U-72)를 기준으로
+        누락된 항목을 UNKNOWN으로 채워 넣음.
+        """
+        try: 
+            mapping = self.config.get(self.common_os_type, {})
+            category_map = mapping.get("CATEGORY_MAPPING", {}) or {}
+            risk_map = mapping.get("RISK_LEVEL_MAPPING", {}) or {}
+
+            present_codes = set()
+            if self.common_os_type == "Linux":
+                for r in self.audit_results:
+                    item = r.get("item", "")
+                    if item.startswith("U-"):
+                        present_codes.add(item.split('.')[0].strip())
+            elif self.common_os_type == "Windows":
+                for r in self.audit_results:
+                    item = r.get("item", "")
+                    if item.startswith("W-"):
+                        present_codes.add(item.split('.')[0].strip())
+        
+            # 필요한 전체 U코드 집합
+            all_codes = set(category_map.keys()) | set(risk_map.keys())
+            for code in sorted(all_codes):
+                if code not in present_codes:
+                    self.audit_results.append({
+                        "module"
+                        "item": f"{code}. (자동 채움)",
+                        "status": "UNKNOWN",
+                        "reason": "모듈에서 평가 결과가 생성되지 않아 자동으로 UNKNOWN 처리되었습니다.",
+                        "current_value": "",
+                        "evidence": ""
+                    })
+        except Exception as e:
+            logging.error(f"U-코드 자동 보정 중 오류: {e}")
+
 
 
 
@@ -278,7 +419,9 @@ if __name__ == "__main__":
     engine = SecurityAuditEngine()
     print(f"{engine.os_type}점검을 시작합니다. 잠시만 기다려주세요.")
     engine.run_audits()
+    #engine._ensure_full_u_codes()
     engine.generate_report()
+    
 
     print("Press Enter to exit...")
     input()

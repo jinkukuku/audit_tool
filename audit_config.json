@@ -4,6 +4,18 @@
         "log_level": "INFO"
     },
     "Linux": {
+	"Path" : 
+        [
+            "/etc/securetty",   "/etc/pam.d/login",     "/etc/ssh/sshd_config", 
+            "/etc/shadow",      "/etc/passwd",          "/.profile", "/.cshrc",
+            "/etc/profile",     "/etc/(x)inetd.conf",   "/etc/syslog.conf", 
+            "/etc/services",    "$HOME/.rhosts",        "/etc/mail/sendmail.cf", 
+            "/etc/hosts.lpd",   "/etc/motd",            "/etc/issue", 
+            "/etc/named.conf",  "/etc/proftpd.conf",    "/etc/exports",         
+            "/etc/ftpusers",    "/etc/ftpd/ftpusers",   "/etc/vsftpd/ftpusers", 
+            "/etc/at.allow",    "/etc/at.deny",         "httpd.conf", 
+            "httpd-vhosts.conf"
+        ],
         "item" : {
             "U-01": "U-01. root 계정 원격 접속 제한",                   "U-02": "U-02. 패스워드 복잡성 설정",
             "U-03": "U-03. 계정 잠금 임계값 설정",                      "U-04": "U-04. 패스워드 파일 보호",
@@ -162,7 +174,11 @@
             "U-42": "패치 관리",
 
             "U-43": "로그 관리", "U-72": "로그 관리"
-        }
+        },
+	"inspect":
+	{
+	    "U-01":{"/etc/ssh/sshd_config":["PermitRootLogin"]}
+	}
     },
     "Windows": {
         "RISK_LEVEL_MAPPING":{
@@ -215,12 +231,7 @@
         "file_directory_management": {},
         "service_management": {},
         "patch_management": {},
-        "log_management": {},
-        "inspect" : 
-        {
-            "W-02" : 
-            { "/etc/default/passwd": ["MINALPHA > 0", "MINNONALPHA > 0", "MINDIGIT > 0", "PASSLENGTH > 7"] }
-        }
+        "log_management": {}
     },
     "Solaris": {
         "item" : {

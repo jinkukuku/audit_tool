@@ -26,34 +26,21 @@ class BaseAuditModule(ABC):
         """
         pass
 
-    def _add_audit_result(self, item_name, status, reason, current_value="N/A", recommended_value="N/A"):
-        """
-        점검 결과를 module_audit_results 목록에 추가하고 로깅합니다.
-        Args:
-            item_name (str): 점검 항목의 이름 (예: "U-01. root 계정 원격 접속 제한").
-            status (str): 점검 결과 상태 ("VULNERABLE" 또는 "COMPLIANT").
-            reason (str): 점검 결과에 대한 설명.
-            current_value (str): 현재 시스템의 설정 또는 값.
-            recommended_value (str): 권고되는 설정 또는 값.
-        """
-        result_entry = {
-            'module': self.module_name,
-            'item': item_name,
-            'status': status,
-            'reason': reason,
-            'current_value': current_value,
-            'recommended_value': recommended_value
+    def _add_audit_result(self, item, status, reason="", current_value="", recomended_value=""):
+        result = {
+            "module" : self.module_name,
+            "item": item,
+            "status": status,
+            "reason": reason,
+            "current_value": current_value,
+            "recommended_value": recomended_value
         }
-        self.module_audit_results.append(result_entry)
-
-        if status == "VULNERABLE":
-            logging.warning(f"취약점 발견 - 모듈: {self.module_name}, 항목: {item_name}, 이유: {reason}")
-        else:
-            logging.info(f"점검 결과 - 모듈: {self.module_name}, 항목: {item_name}, 상태: {status}")
+        self.module_audit_results.append(result)
 
     def _log_audit_item(self, item_name):
         """
-        각 점검 항목 시작을 로깅하는 헬퍼 메서드.
+        각 점검 항목 시작을 로깅하는 헬퍼 메서드. 
         """
         logging.info(f"  - 점검 항목: {item_name}")
+
 

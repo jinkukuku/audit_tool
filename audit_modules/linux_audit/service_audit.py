@@ -46,7 +46,7 @@ class ServiceManagementAudit(BaseAuditModule):
         # U-21. r 계열 서비스 비활성화
         item_u21 = "U-21. r 계열 서비스 비활성화"
         self._log_audit_item(item_u21)
-        # 점검 방법: /etc/inetd.conf 또는 /etc/xinetd.d/rsh, rlogin, rexec 서비스 활성화 여부 확인
+        # 점검 방법: /etc/inetd.conf 또는 /etc/xinetd.d/rsh, rlogin, rexec 서비스 활성화 여부 확인   
         # TODO: U-21 구현
         self._add_audit_result(
             item_u21,

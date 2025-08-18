@@ -63,9 +63,9 @@ class AccountManagementAudit(AuditModule):
         try:
             cmd_output = self._execute_powershell("net accounts")
             if cmd_output:
-                match = re.search(r"Minimum password length:\s*(\d+)", cmd_output)
+                match = re.search(r"(Minimum password length|최소 암호 길이)\s*:?\s*(\d+)", cmd_output)
                 if match:
-                    current_length = int(match.group(1))
+                    current_length = int(match.group(2))
                     recommended_length = self.account_config.get('w01_password_policy_min_length', 8)
                     if current_length >= recommended_length:
                         self._record_result(item, "PASS", f"최소 암호 길이가 {current_length}자로 적절하게 설정되어 있습니다.",
@@ -90,9 +90,9 @@ class AccountManagementAudit(AuditModule):
         try:
             cmd_output = self._execute_powershell("net accounts")
             if cmd_output:
-                match = re.search(r"Lockout threshold:\s*(\d+)", cmd_output)
+                match = re.search(r"(Lockout threshold|잠금 임계값)\s*:?\s*(\d+)", cmd_output)
                 if match:
-                    current_threshold = int(match.group(1))
+                    current_threshold = int(match.group(2))
                     recommended_threshold = self.account_config.get('w02_account_lockout_threshold', 5)
                     if current_threshold <= recommended_threshold and current_threshold > 0:
                         self._record_result(item, "PASS", f"계정 잠금 임계값이 {current_threshold}회로 적절하게 설정되어 있습니다.",
@@ -119,10 +119,12 @@ class AccountManagementAudit(AuditModule):
         item = "W-03. Guest 계정 비활성화"
         try:
             cmd_output = self._execute_powershell("net user Guest")
-            if cmd_output and "Account active                 No" in cmd_output:
+            match = re.search(r"(Account active|활성 계정)\s*:?\s*(\w+)", cmd_output)
+            current_threshold = match.group(2)
+            if current_threshold in (r"[Nn]o","아니요"):
                 self._record_result(item, "PASS", "Guest 계정이 비활성화되어 있습니다.",
                                     current_value="비활성화", recommended_value="비활성화")
-            elif cmd_output and "Account active                 Yes" in cmd_output:
+            elif current_threshold in (r"[Yy]es","예"):
                 self._record_result(item, "VULNERABLE", "Guest 계정이 활성화되어 있습니다. 비활성화하십시오.",
                                     current_value="활성화", recommended_value="비활성화")
             else:

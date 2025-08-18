@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from base_audit_module import BaseAuditModule
 from platform_utils import PlatformUtils
 
@@ -11,7 +12,7 @@ from platform_utils import PlatformUtils
 # 부분 : 1,54
 # 별개 : 2,3,45,46
 
-class AccountManagementAudit(BaseAuditModule):
+class   AccountManagementAudit(BaseAuditModule):
     """
     계정 관리 관련 보안 점검을 수행하는 모듈입니다.
     대상 항목: U-01 ~ U-04, U-44 ~ U-54
@@ -101,8 +102,8 @@ class AccountManagementAudit(BaseAuditModule):
                     for line in stdout.splitlines():
                         line = line.strip()
                         for property in properties:
-                            if line.startswith(property):
-                                parts = line.split(r'\s*=\s*|\s+', line, maxsplit=1)
+                            if line.find(property) != -1 and line.find(property) <= 3:
+                                parts = re.split(r'\s*=\s*|\s+', line, maxsplit=1)
                                 if len(parts) == 2:
                                     key = parts[0].strip()
                                     value = parts[1].strip()
@@ -460,66 +461,29 @@ class AccountManagementAudit(BaseAuditModule):
         
 
     def U_04(self):
-        # U-04. 패스워드 파일 보호
-        item_u04 = "U-04. 패스워드 파일 보호"
-        self._log_audit_item(item_u04)
+        item_u04 = "U-04. 패스워드 파일 보호"      
         passwd_path = self.account_config.get('u04_passwd_file', "/etc/passwd")
         shadow_path = self.account_config.get('u04_shadow_file', "/etc/shadow")
         
-        is_passwd_protected = True
-        vulnerable_reasons_u04 = []
-        current_passwd_info = "N/A"
-        current_shadow_info = "N/A"
+        #passwd 파일
+        result = ""
+        stdout, stderr, returncode = PlatformUtils.execute_command(["grep", "^root", passwd_path]) #명령어 실행 결과는 튜플로 넘어오게 됨
+        if returncode != 0:            
+            result = "파일을 찾을 수 없습니다."
+        else:
+            result = stdout
+        self._add_audit_result(item_u04, passwd_path, result) # result[0] : 명령어 결과, result[1] : error 내용 , result[2] : 0 = 정상, !0 = 실행 중 오류
+    
+        #shadow 파일
+        stdout, stderr, returncode = PlatformUtils.execute_command(["grep", "^root", shadow_path])
+        if returncode != 0:            
+            result = "파일을 찾을 수 없습니다."
+        else:
+            result = stdout
+        self._add_audit_result(item_u04, shadow_path, result)
 
-        if PlatformUtils.check_file_exists(passwd_path):
-            stdout, stderr, returncode = PlatformUtils.execute_command(['cat', passwd_path])
-            if returncode == 0:
-                current_passwd_info = stdout.strip()
-                for line in stdout.splitlines():
-                    parts = line.split(':')
-                    if len(parts) > 1 and parts[1] != 'x':
-                        is_passwd_protected = False
-                        vulnerable_reasons_u04.append(f"'{passwd_path}' 파일에 암호화되지 않은 패스워드가 존재할 수 있습니다 (계정: {parts[0]}, 패스워드 필드: {parts[1]}가 'x'가 아님).")
-                        break
-            else:
-                is_passwd_protected = False
-                vulnerable_reasons_u04.append(f"'{passwd_path}' 파일을 읽을 수 없습니다: {stderr}")
-        else:
-            is_passwd_protected = False
-            vulnerable_reasons_u04.append(f"'{passwd_path}' 파일이 존재하지 않습니다.")
         
-        if PlatformUtils.check_file_exists(shadow_path):
-            stdout, stderr, returncode = PlatformUtils.execute_command(['cat', shadow_path])
-            if returncode == 0:
-                current_shadow_info = stdout.strip()
-                if not stdout.strip():
-                     is_passwd_protected = False
-                     vulnerable_reasons_u04.append(f"'{shadow_path}' 파일이 비어있거나 올바르게 사용되지 않습니다.")
-                # TODO: $1 (MD5) 사용 여부 등 더 정밀한 암호화 알고리즘 점검 로직 추가 가능
-            else:
-                is_passwd_protected = False
-                vulnerable_reasons_u04.append(f"'{shadow_path}' 파일을 읽을 수 없습니다: {stderr}")
-        else:
-            is_passwd_protected = False
-            vulnerable_reasons_u04.append(f"'{shadow_path}' 파일이 존재하지 않습니다.")
         
-        if is_passwd_protected:
-            self._add_audit_result(
-                item_u04,
-                "COMPLIANT",
-                "패스워드 파일이 적절하게 보호되고 있습니다.",
-                f"passwd: {current_passwd_info[:50]}..., shadow: {current_shadow_info[:50]}...",
-                "shadow 패스워드 사용 및 안전한 알고리즘 적용"
-            )
-        else:
-            self._add_audit_result(
-                item_u04,
-                "VULNERABLE",
-                "; ".join(vulnerable_reasons_u04),
-                f"passwd: {current_passwd_info[:50]}..., shadow: {current_shadow_info[:50]}...",
-                "shadow 패스워드 사용 및 안전한 알고리즘 적용"
-            )
-
     def U_44(self):
         # U-44. root 이외의 UID가 '0' 금지
         item_u44 = "U-44. root 이외의 UID가 '0' 금지"
@@ -837,58 +801,17 @@ class AccountManagementAudit(BaseAuditModule):
     def U_50(self):
         # U-50. 관리자 그룹에 최소한의 계정 포함
         item_u50 = "U-50. 관리자 그룹에 최소한의 계정 포함"
-        self._log_audit_item(item_u50)
         group_path = "/etc/group"
-        is_admin_group_ok = True
-        current_group_content = "N/A"
-        vulnerable_reasons_u50 = []
-
-        if PlatformUtils.check_file_exists(group_path):
-            stdout, stderr, returncode = PlatformUtils.execute_command(['cat', group_path])
-            if returncode == 0:
-                current_group_content = stdout.strip()
-                for line in stdout.splitlines():
-                    if line.startswith("root:"):
-                        parts = line.split(':')
-                        if len(parts) == 4:
-                            members = [m.strip() for m in parts[3].split(',') if m.strip()]
-                            if 'root' not in members or len(members) > 1:
-                                is_admin_group_ok = False
-                                vulnerable_reasons_u50.append(f"root 그룹에 root 외의 계정이 포함되어 있거나 root 계정이 없습니다: {parts[3]}")
-                                break
-                        break # root 그룹 라인만 확인
-                if not is_admin_group_ok:
-                    self._add_audit_result(
-                        item_u50,
-                        "VULNERABLE",
-                        "; ".join(vulnerable_reasons_u50),
-                        current_group_content,
-                        "root 그룹에 root 계정만 포함"
-                    )
-                else:
-                    self._add_audit_result(
-                        item_u50,
-                        "COMPLIANT",
-                        "관리자 그룹에 최소한의 계정만 포함되어 있습니다.",
-                        current_group_content,
-                        "root 그룹에 root 계정만 포함"
-                    )
-            else:
-                self._add_audit_result(
-                    item_u50,
-                    "VULNERABLE",
-                    f"'{group_path}' 파일을 읽을 수 없습니다: {stderr}",
-                    "파일 접근 불가",
-                    "root 그룹에 root 계정만 포함"
-                )
+      
+        #passwd 파일
+        result = ""
+        stdout, stderr, returncode = PlatformUtils.execute_command(["grep", "^root", group_path]) #명령어 실행 결과는 튜플로 넘어오게 됨
+        if returncode != 0:            
+            result = "파일을 찾을 수 없습니다."
         else:
-            self._add_audit_result(
-                item_u50,
-                "VULNERABLE",
-                f"'{group_path}' 파일이 존재하지 않습니다.",
-                "파일 없음",
-                "root 그룹에 root 계정만 포함"
-            )
+            result = stdout
+        self._add_audit_result(item_u50, group_path, result) # result[0] : 명령어 결과, result[1] : error 내용 , result[2] : 0 = 정상, !0 = 실행 중 오류
+    
     
     def U_51(self):
         # U-51. 계정이 존재하지 않는 GID 금지
