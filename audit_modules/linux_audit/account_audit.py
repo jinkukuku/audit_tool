@@ -12,7 +12,7 @@ from platform_utils import PlatformUtils
 # 부분 : 1,54
 # 별개 : 2,3,45,46
 
-class   AccountManagementAudit(BaseAuditModule):
+class AccountManagementAudit(BaseAuditModule):
     """
     계정 관리 관련 보안 점검을 수행하는 모듈입니다.
     대상 항목: U-01 ~ U-04, U-44 ~ U-54
@@ -23,19 +23,22 @@ class   AccountManagementAudit(BaseAuditModule):
         self.module_name = "계정 관리"
         self.os_type = os_type
         # 계정 관리 모듈에 필요한 특정 설정들을 config에서 추출할 수 있습니다.
-        self.account_config = self.config.get('', {})
+        self.account_config = self.config.get('account_management', {})
 
     def common(self):
         # 공통 : 4,50,51,52
         self.U_04()
+        self.U_44()
         self.U_50()
         self.U_51()
         self.U_52()
+        self.U_53()
+        self.U_54()
 
-    #ef similar(self):
-        # 부분 : 1,54
-        #self.U_01()
-        #self.U_54()
+    def similar(self):
+        #부분 : 1,54
+        self.U_01()
+        self.U_54()
         
     def different(self):
         # 별개 : 2,3,45,46
@@ -45,10 +48,10 @@ class   AccountManagementAudit(BaseAuditModule):
             self.lin_U_45()
 
         elif(self.os_type == "Solaris") :
-            self.sol_U_02()
-            self.sol_U_03()
+            #self.sol_U_02()
+            #self.sol_U_03()
             #self.sol_U_45()
-        
+
         #elif(self.os_type == "AIX") :
             # self.aix_U_02()
             # self.aix_U_03()
@@ -78,7 +81,6 @@ class   AccountManagementAudit(BaseAuditModule):
 
         logging.info(f"{self.module_name} 점검을 완료했습니다.")
         return self.module_audit_results    
-    
 
     def inspect_file(self, category):
         """
@@ -102,13 +104,14 @@ class   AccountManagementAudit(BaseAuditModule):
                     for line in stdout.splitlines():
                         line = line.strip()
                         for property in properties:
-                            if line.find(property) != -1 and line.find(property) <= 3:
+                            if line.find(property) > -1 and line.find(property) <= 2:
                                 parts = re.split(r'\s*=\s*|\s+', line, maxsplit=1)
                                 if len(parts) == 2:
                                     key = parts[0].strip()
                                     value = parts[1].strip()
                                     results[file_path][key] = value
         return results
+    
 
 
     def U_01(self):
@@ -164,15 +167,15 @@ class   AccountManagementAudit(BaseAuditModule):
         # U-02. 패스워드 복잡성 설정
         item_u02 = "U-02. 패스워드 복잡성 설정"
         self._log_audit_item(item_u02)
-        file_path = "/etc/security/pwquality.conf"
+        pwquality_conf_path = "/etc/security/pwquality.conf"
         
         is_complex_password_set = False
-        current_settings = "N/A"
+        current_pw_settings = "N/A"
 
-        if PlatformUtils.check_file_exists(file_path):
-            stdout, stderr, returncode = PlatformUtils.execute_command(['cat', file_path])
+        if PlatformUtils.check_file_exists(pwquality_conf_path):
+            stdout, stderr, returncode = PlatformUtils.execute_command(['cat', pwquality_conf_path])
             if returncode == 0:
-                current_settings = stdout.strip()
+                current_pw_settings = stdout.strip()
                 minlen_ok = False
                 lcredit_ok = False
                 ucredit_ok = False
@@ -205,14 +208,14 @@ class   AccountManagementAudit(BaseAuditModule):
                         item_u02,
                         "VULNERABLE",
                         f"패스워드 복잡성 정책이 미흡합니다: {', '.join(reason_parts)}",
-                        current_settings,
+                        current_pw_settings[:100],
                         "minlen=8, lcredit=-1, ucredit=-1, dcredit=-1, ocredit=-1"
                     )
             else:
                 self._add_audit_result(
                     item_u02,
                     "VULNERABLE",
-                    f"'{file_path}' 파일을 읽을 수 없습니다: {stderr}",
+                    f"'{pwquality_conf_path}' 파일을 읽을 수 없습니다: {stderr}",
                     "파일 접근 불가",
                     "minlen=8, lcredit=-1, ucredit=-1, dcredit=-1, ocredit=-1"
                 )
@@ -220,7 +223,7 @@ class   AccountManagementAudit(BaseAuditModule):
             self._add_audit_result(
                 item_u02,
                 "VULNERABLE",
-                f"'{file_path}' 파일이 존재하지 않습니다.",
+                f"'{pwquality_conf_path}' 파일이 존재하지 않습니다.",
                 "파일 없음",
                 "minlen=8, lcredit=-1, ucredit=-1, dcredit=-1, ocredit=-1"
             )
@@ -230,24 +233,22 @@ class   AccountManagementAudit(BaseAuditModule):
                 item_u02,
                 "COMPLIANT",
                 "패스워드 복잡성 정책이 적절하게 설정되어 있습니다.",
-                current_settings,
+                current_pw_settings[:100],
                 "minlen=8, lcredit=-1, ucredit=-1, dcredit=-1, ocredit=-1"
             )
-
-
     def sol_U_02(self):
         # U-02. 패스워드 복잡성 설정
         item_u02 = "U-02. 패스워드 복잡성 설정"
         self._log_audit_item(item_u02)
-        file_path = "/etc/default/passwd"
+        pwquality_conf_path = "/etc/default/passwd"
         
         is_complex_password_set = False
-        current_settings = "N/A"
+        current_pw_settings = "N/A"
 
-        if PlatformUtils.check_file_exists(file_path):
-            stdout, stderr, returncode = PlatformUtils.execute_command(['cat', file_path])
+        if PlatformUtils.check_file_exists(pwquality_conf_path):
+            stdout, stderr, returncode = PlatformUtils.execute_command(['cat', pwquality_conf_path])
             if returncode == 0:
-                current_settings = stdout.strip()
+                current_pw_settings = stdout.strip()
                 maxweeks_ok = False
                 minalpha_ok = False
                 mindigit_ok = False
@@ -310,14 +311,14 @@ class   AccountManagementAudit(BaseAuditModule):
                         item_u02,
                         "VULNERABLE",
                         f"패스워드 복잡성 정책이 미흡합니다: {', '.join(reason_parts)}",
-                        current_settings,
+                        current_pw_settings,
                         ""
                     )
             else:
                 self._add_audit_result(
                     item_u02,
                     "VULNERABLE",
-                    f"'{file_path}' 파일을 읽을 수 없습니다: {stderr}",
+                    f"'{pwquality_conf_path}' 파일을 읽을 수 없습니다: {stderr}",
                     "파일 접근 불가",
                     ""
                 )
@@ -325,7 +326,7 @@ class   AccountManagementAudit(BaseAuditModule):
             self._add_audit_result(
                 item_u02,
                 "VULNERABLE",
-                f"'{file_path}' 파일이 존재하지 않습니다.",
+                f"'{pwquality_conf_path}' 파일이 존재하지 않습니다.",
                 "파일 없음",
                 ""
             )
@@ -335,7 +336,7 @@ class   AccountManagementAudit(BaseAuditModule):
                 item_u02,
                 "COMPLIANT",
                 "패스워드 복잡성 정책이 적절하게 설정되어 있습니다.",
-                current_settings,
+                current_pw_settings,
                 ""
             )
     
@@ -394,96 +395,76 @@ class   AccountManagementAudit(BaseAuditModule):
                 "deny=10 이하"
             )
     
-    def sol_U_03(self):
-
+    #def sol_U_03(self):
         # /etc/security/policy.conf
         # LOCK_AFTER_RETRIES=yes
         # /etc/user_attr
         # user::::lock_after_retries=yes;
         # /etc/default/login
         # RETRIES=10
-        # U-03. 계정 잠금 임계값 설정          
-        # 
-        item_u03 = "U-03. 계정 잠금 임계값 설정"
-        
-        self._log_audit_item(item_u03)
-        pam_file = "/etc/security/policy.conf"
-        is_threshold_set = True
-        vulnerable_reasons_u03 = []
-
-        a = self.inspect_file()
-
-        
-        if PlatformUtils.check_file_exists(pam_file):
-            stdout, stderr, returncode = PlatformUtils.execute_command(['cat', pam_file])
-            if returncode == 0:
-                found_deny_setting = False
-                for line in stdout.splitlines():
-                    if ("pam_faillock.so" in line or "pam_tally2.so" in line) and "deny=" in line:
-                        try:
-                            deny_value_str = line.split("deny=")[1].split(" ")[0].strip()
-                            deny_value = int(deny_value_str)
-                            if deny_value <= 10:
-                                found_deny_setting = True
-                                break
-                            else:
-                                vulnerable_reasons_u03.append(f"'{pam_file}'의 deny 값이 10회를 초과합니다. (현재: {deny_value})")
-                                is_threshold_set = False
-                        except ValueError:
-                            vulnerable_reasons_u03.append(f"'{pam_file}'에서 deny 값 파싱 오류.")
-                            is_threshold_set = False
-                if not found_deny_setting and is_threshold_set: # 아직 취약으로 판단되지 않았을 때만 
-                    vulnerable_reasons_u03.append(f"'{pam_file}' 파일에 계정 잠금 임계값(deny)이 10회 이하로 설정되어 있지 않습니다.")
-                    is_threshold_set = False
-            else:
-                vulnerable_reasons_u03.append(f"'{pam_file}' 파일을 읽을 수 없습니다: {stderr}")
-                is_threshold_set = False
-        else:
-            vulnerable_reasons_u03.append(f"'{pam_file}' 파일이 존재하지 않습니다.")
-            is_threshold_set = False
-        
-        if is_threshold_set:
-            self._add_audit_result(
-                item_u03,
-                "COMPLIANT",
-                "계정 잠금 임계값이 적절하게 설정되어 있습니다.",
-                "설정 확인됨",
-                "deny=10 이하"
-            )
-        else:
-            self._add_audit_result(
-                item_u03,
-                "VULNERABLE",
-                "; ".join(vulnerable_reasons_u03),
-                "현재 설정값 확인 필요",
-                "deny=10 이하"
-            )
         
 
     def U_04(self):
-        item_u04 = "U-04. 패스워드 파일 보호"      
+        # U-04. 패스워드 파일 보호
+        item_u04 = "U-04. 패스워드 파일 보호"
+        self._log_audit_item(item_u04)
         passwd_path = self.account_config.get('u04_passwd_file', "/etc/passwd")
         shadow_path = self.account_config.get('u04_shadow_file', "/etc/shadow")
         
-        #passwd 파일
-        result = ""
-        stdout, stderr, returncode = PlatformUtils.execute_command(["grep", "^root", passwd_path]) #명령어 실행 결과는 튜플로 넘어오게 됨
-        if returncode != 0:            
-            result = "파일을 찾을 수 없습니다."
-        else:
-            result = stdout
-        self._add_audit_result(item_u04, passwd_path, result) # result[0] : 명령어 결과, result[1] : error 내용 , result[2] : 0 = 정상, !0 = 실행 중 오류
-    
-        #shadow 파일
-        stdout, stderr, returncode = PlatformUtils.execute_command(["grep", "^root", shadow_path])
-        if returncode != 0:            
-            result = "파일을 찾을 수 없습니다."
-        else:
-            result = stdout
-        self._add_audit_result(item_u04, shadow_path, result)
+        is_passwd_protected = True
+        vulnerable_reasons_u04 = []
+        current_passwd_info = "N/A"
+        current_shadow_info = "N/A"
 
+        if PlatformUtils.check_file_exists(passwd_path):
+            stdout, stderr, returncode = PlatformUtils.execute_command(['cat', passwd_path])
+            if returncode == 0:
+                current_passwd_info = stdout.strip()
+                for line in stdout.splitlines():
+                    parts = line.split(':')
+                    if len(parts) > 1 and parts[1] != 'x':
+                        is_passwd_protected = False
+                        vulnerable_reasons_u04.append(f"'{passwd_path}' 파일에 암호화되지 않은 패스워드가 존재할 수 있습니다 (계정: {parts[0]}, 패스워드 필드: {parts[1]}가 'x'가 아님).")
+                        break
+            else:
+                is_passwd_protected = False
+                vulnerable_reasons_u04.append(f"'{passwd_path}' 파일을 읽을 수 없습니다: {stderr}")
+        else:
+            is_passwd_protected = False
+            vulnerable_reasons_u04.append(f"'{passwd_path}' 파일이 존재하지 않습니다.")
         
+        if PlatformUtils.check_file_exists(shadow_path):
+            stdout, stderr, returncode = PlatformUtils.execute_command(['cat', shadow_path])
+            if returncode == 0:
+                current_shadow_info = stdout.strip()
+                if not stdout.strip():
+                     is_passwd_protected = False
+                     vulnerable_reasons_u04.append(f"'{shadow_path}' 파일이 비어있거나 올바르게 사용되지 않습니다.")
+                # TODO: $1 (MD5) 사용 여부 등 더 정밀한 암호화 알고리즘 점검 로직 추가 가능
+            else:
+                is_passwd_protected = False
+                vulnerable_reasons_u04.append(f"'{shadow_path}' 파일을 읽을 수 없습니다: {stderr}")
+        else:
+            is_passwd_protected = False
+            vulnerable_reasons_u04.append(f"'{shadow_path}' 파일이 존재하지 않습니다.")
         
+        if is_passwd_protected:
+            self._add_audit_result(
+                item_u04,
+                "COMPLIANT",
+                "패스워드 파일이 적절하게 보호되고 있습니다.",
+                f"passwd: {current_passwd_info[:100]}..., shadow: {current_shadow_info[:100]}...",
+                "shadow 패스워드 사용 및 안전한 알고리즘 적용"
+            )
+        else:
+            self._add_audit_result(
+                item_u04,
+                "VULNERABLE",
+                "; ".join(vulnerable_reasons_u04),
+                f"passwd: {current_passwd_info[:100]}..., shadow: {current_shadow_info[:100]}...",
+                "shadow 패스워드 사용 및 안전한 알고리즘 적용"
+            )
+
     def U_44(self):
         # U-44. root 이외의 UID가 '0' 금지
         item_u44 = "U-44. root 이외의 UID가 '0' 금지"
@@ -589,7 +570,7 @@ class   AccountManagementAudit(BaseAuditModule):
                 item_u45,
                 "COMPLIANT",
                 "su 명령어가 특정 그룹으로 제한되어 있습니다.",
-                f"su_pam: {current_su_config[:50]}..., group: {current_group_config[:50]}...",
+                f"su_pam: {current_su_config[:100]}..., group: {current_group_config[:100]}...",
                 "pam_wheel.so 설정 및 wheel 그룹 구성원 제한"
             )
         else:
@@ -597,7 +578,7 @@ class   AccountManagementAudit(BaseAuditModule):
                 item_u45,
                 "VULNERABLE",
                 "; ".join(vulnerable_reasons_u45),
-                f"su_pam: {current_su_config[:50]}..., group: {current_group_config[:50]}...",
+                f"su_pam: {current_su_config[:100]}..., group: {current_group_config[:100]}...",
                 "pam_wheel.so 설정 및 wheel 그룹 구성원 제한"
             )
 
@@ -801,17 +782,58 @@ class   AccountManagementAudit(BaseAuditModule):
     def U_50(self):
         # U-50. 관리자 그룹에 최소한의 계정 포함
         item_u50 = "U-50. 관리자 그룹에 최소한의 계정 포함"
+        self._log_audit_item(item_u50)
         group_path = "/etc/group"
-      
-        #passwd 파일
-        result = ""
-        stdout, stderr, returncode = PlatformUtils.execute_command(["grep", "^root", group_path]) #명령어 실행 결과는 튜플로 넘어오게 됨
-        if returncode != 0:            
-            result = "파일을 찾을 수 없습니다."
+        is_admin_group_ok = True
+        current_group_content = "N/A"
+        vulnerable_reasons_u50 = []
+
+        if PlatformUtils.check_file_exists(group_path):
+            stdout, stderr, returncode = PlatformUtils.execute_command(['cat', group_path])
+            if returncode == 0:
+                current_group_content = stdout.strip()
+                for line in stdout.splitlines():
+                    if line.startswith("root:"):
+                        parts = line.split(':')
+                        if len(parts) == 4:
+                            members = [m.strip() for m in parts[3].split(',') if m.strip()]
+                            if 'root' not in members or len(members) > 1:
+                                is_admin_group_ok = False
+                                vulnerable_reasons_u50.append(f"root 그룹에 root 외의 계정이 포함되어 있거나 root 계정이 없습니다: {parts[3]}")
+                                break
+                        break # root 그룹 라인만 확인
+                if not is_admin_group_ok:
+                    self._add_audit_result(
+                        item_u50,
+                        "VULNERABLE",
+                        "; ".join(vulnerable_reasons_u50),
+                        current_group_content[:100],
+                        "root 그룹에 root 계정만 포함"
+                    )
+                else:
+                    self._add_audit_result(
+                        item_u50,
+                        "COMPLIANT",
+                        "관리자 그룹에 최소한의 계정만 포함되어 있습니다.",
+                        current_group_content[:100],
+                        "root 그룹에 root 계정만 포함"
+                    )
+            else:
+                self._add_audit_result(
+                    item_u50,
+                    "VULNERABLE",
+                    f"'{group_path}' 파일을 읽을 수 없습니다: {stderr}",
+                    "파일 접근 불가",
+                    "root 그룹에 root 계정만 포함"
+                )
         else:
-            result = stdout
-        self._add_audit_result(item_u50, group_path, result) # result[0] : 명령어 결과, result[1] : error 내용 , result[2] : 0 = 정상, !0 = 실행 중 오류
-    
+            self._add_audit_result(
+                item_u50,
+                "VULNERABLE",
+                f"'{group_path}' 파일이 존재하지 않습니다.",
+                "파일 없음",
+                "root 그룹에 root 계정만 포함"
+            )
     
     def U_51(self):
         # U-51. 계정이 존재하지 않는 GID 금지
@@ -862,7 +884,7 @@ class   AccountManagementAudit(BaseAuditModule):
                         item_u52,
                         "VULNERABLE",
                         f"동일한 UID를 사용하는 계정이 존재합니다: {'; '.join(vulnerable_uids)}",
-                        current_passwd_content,
+                        current_passwd_content[:100],
                         "각 계정별 고유 UID 할당"
                     )
                 else:
@@ -870,7 +892,7 @@ class   AccountManagementAudit(BaseAuditModule):
                         item_u52,
                         "COMPLIANT",
                         "동일한 UID를 사용하는 계정이 존재하지 않습니다.",
-                        current_passwd_content,
+                        current_passwd_content[:100],
                         "각 계정별 고유 UID 할당"
                     )
             else:
@@ -920,7 +942,7 @@ class   AccountManagementAudit(BaseAuditModule):
                         item_u53,
                         "VULNERABLE",
                         f"로그인이 불필요한 계정에 제한된 쉘이 부여되지 않았습니다: {', '.join(vulnerable_shells)}",
-                        current_passwd_content,
+                        current_passwd_content[:100],
                         "/bin/false 또는 /sbin/nologin 쉘 부여"
                     )
                 else:
@@ -928,7 +950,7 @@ class   AccountManagementAudit(BaseAuditModule):
                         item_u53,
                         "COMPLIANT",
                         "로그인이 불필요한 계정에 제한된 쉘이 부여되어 있습니다.",
-                        current_passwd_content,
+                        current_passwd_content[:100],
                         "/bin/false 또는 /sbin/nologin 쉘 부여"
                     )
             else:
@@ -961,7 +983,7 @@ class   AccountManagementAudit(BaseAuditModule):
             if PlatformUtils.check_file_exists(env_file):
                 stdout, stderr, returncode = PlatformUtils.execute_command(['cat', env_file])
                 if returncode == 0:
-                    current_timeout_info += f"{env_file}: {stdout.strip()[:50]}...; "
+                    current_timeout_info += f"{env_file}: {stdout.strip()[:100]}...; "
                     for line in stdout.splitlines():
                         line = line.strip()
                         if line.startswith("TMOUT=") and "export TMOUT" in stdout:
@@ -992,7 +1014,7 @@ class   AccountManagementAudit(BaseAuditModule):
                 item_u54,
                 "COMPLIANT",
                 "Session Timeout이 600초(10분) 이하로 적절하게 설정되어 있습니다.",
-                current_timeout_info,
+                current_timeout_info[:100],
                 "TMOUT=600 또는 set autologout=10"
             )
         else:
@@ -1000,7 +1022,7 @@ class   AccountManagementAudit(BaseAuditModule):
                 item_u54,
                 "VULNERABLE",
                 "Session Timeout이 600초(10분) 이하로 설정되어 있지 않거나 설정이 미흡합니다: " + "; ".join(vulnerable_reasons_u54),
-                current_timeout_info,
+                current_timeout_info[:100],
                 "TMOUT=600 또는 set autologout=10"
             )
 
