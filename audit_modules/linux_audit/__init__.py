@@ -7,6 +7,7 @@ from .file_permission_audit import FileDirectoryAudit
 from .service_audit import ServiceManagementAudit
 from .patch_audit import PatchManagementAudit
 from .log_audit import LogManagementAudit
+from .get_system_file import GetSystemFile
 
 # 'from audit_modules.linux_audit import *' 사용 시 임포트될 클래스들을 정의합니다.
 __all__ = [
