@@ -32,7 +32,7 @@ jobs:
 
       - name: Build executable
         run: |
-          pyinstaller --onefile main.py
+          pyinstaller --onefile main.py --add-data "audit_modules:audit_modules"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
