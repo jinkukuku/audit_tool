@@ -40,10 +40,9 @@ jobs:
           name: main-${{ matrix.os }}
           path: dist/*
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build executable
+        run: |
+          pyinstaller --onefile --clean --log-level=DEBUG main.py
 
