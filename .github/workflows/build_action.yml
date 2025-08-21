@@ -39,9 +39,10 @@ jobs:
         with:
           name: main-artifacts-${{ matrix.os }}
           path: |
-            dist/main
+            ${{ runner.os == 'Windows' && 'dist/main.exe' || 'dist/main' }}
             audit_config.json
-            audit_modules/
+            audit_modules/**
+
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
