@@ -26,7 +26,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          python -c "import os; import subprocess; \
+                   (os.path.isfile('requirements.txt') and subprocess.check_call(['pip','install','-r','requirements.txt']))"
+
 
       - name: Build executable
         run: |
