@@ -33,12 +33,6 @@ jobs:
       - name: Build executable
         run: |
           pyinstaller --onefile main.py --add-data "audit_modules:audit_modules"
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: main-${{ matrix.os }}
-          path: dist/*
           
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -46,7 +40,7 @@ jobs:
           name: main-artifacts-${{ matrix.os }}
           path: |
             dist/*
-            audit_config
+            audit_config.json
             audit_modules/
 
         env:
