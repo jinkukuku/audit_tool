@@ -68,7 +68,7 @@ class AccountManagementAudit(AuditModule):
                     current_length = int(match.group(2))
                     recommended_length = self.account_config.get('w01_password_policy_min_length', 8)
                     if current_length >= recommended_length:
-                        self._record_result(item, "PASS", f"최소 암호 길이가 {current_length}자로 적절하게 설정되어 있습니다.",
+                        self._record_result(item, "COMPLIANT", f"최소 암호 길이가 {current_length}자로 적절하게 설정되어 있습니다.",
                                             current_value=f"{current_length}자", recommended_value=f"{recommended_length}자 이상")
                     else:
                         self._record_result(item, "VULNERABLE", f"최소 암호 길이가 {current_length}자로 너무 짧게 설정되어 있습니다. {recommended_length}자 이상으로 설정하십시오.",
@@ -95,7 +95,7 @@ class AccountManagementAudit(AuditModule):
                     current_threshold = int(match.group(2))
                     recommended_threshold = self.account_config.get('w02_account_lockout_threshold', 5)
                     if current_threshold <= recommended_threshold and current_threshold > 0:
-                        self._record_result(item, "PASS", f"계정 잠금 임계값이 {current_threshold}회로 적절하게 설정되어 있습니다.",
+                        self._record_result(item, "COMPLIANT", f"계정 잠금 임계값이 {current_threshold}회로 적절하게 설정되어 있습니다.",
                                             current_value=f"{current_threshold}회", recommended_value=f"{recommended_threshold}회 이하 (0 제외)")
                     elif current_threshold == 0:
                         self._record_result(item, "VULNERABLE", "계정 잠금 임계값이 '0'(잠금 없음)으로 설정되어 있습니다. 5회 이하로 설정하십시오.",
@@ -122,7 +122,7 @@ class AccountManagementAudit(AuditModule):
             match = re.search(r"(Account active|활성 계정)\s*:?\s*(\w+)", cmd_output)
             current_threshold = match.group(2)
             if current_threshold in (r"[Nn]o","아니요"):
-                self._record_result(item, "PASS", "Guest 계정이 비활성화되어 있습니다.",
+                self._record_result(item, "COMPLIANT", "Guest 계정이 비활성화되어 있습니다.",
                                     current_value="비활성화", recommended_value="비활성화")
             elif current_threshold in (r"[Yy]es","예"):
                 self._record_result(item, "VULNERABLE", "Guest 계정이 활성화되어 있습니다. 비활성화하십시오.",
@@ -163,7 +163,7 @@ class AccountManagementAudit(AuditModule):
             if match:
                 current_admin_name = match.group(1)
                 if current_admin_name.lower() != "administrator":
-                    self._record_result(item, "PASS", f"Administrator 계정 이름이 '{current_admin_name}'으로 변경되어 있습니다.",
+                    self._record_result(item, "COMPLIANT", f"Administrator 계정 이름이 '{current_admin_name}'으로 변경되어 있습니다.",
                                         current_value=current_admin_name, recommended_value="변경됨")
                 else:
                     self._record_result(item, "VULNERABLE", "Administrator 계정 이름이 'Administrator'로 기본 설정되어 있습니다. 변경하십시오.",
@@ -208,7 +208,7 @@ class AccountManagementAudit(AuditModule):
         # secedit에서 LockoutDuration은 초 단위로 반환됩니다.
         # 10분 = 600초
         if policy_value >= 600 or policy_value == 0: # 0은 "지정된 시간 후 계정 잠금 해제 안 함"으로 양호
-            self._record_result(item, "PASS",
+            self._record_result(item, "COMPLIANT",
                                 f"계정 잠금 기간이 {policy_value/60}분({policy_value}초)으로 적절하게 설정되어 있습니다.",
                                 current_value=f"{policy_value/60}분", recommended_value="10분 이상 또는 0")
         else:
@@ -233,7 +233,7 @@ class AccountManagementAudit(AuditModule):
             return
 
         if policy_value == 1:
-            self._record_result(item, "PASS", "패스워드 복잡성 정책이 '사용'으로 설정되어 있습니다.",
+            self._record_result(item, "COMPLIANT", "패스워드 복잡성 정책이 '사용'으로 설정되어 있습니다.",
                                 current_value="사용 (1)", recommended_value="사용 (1)")
         else:
             self._record_result(item, "VULNERABLE", "패스워드 복잡성 정책이 '사용 안 함'으로 설정되어 있습니다. '사용'으로 변경하십시오.",
@@ -257,7 +257,7 @@ class AccountManagementAudit(AuditModule):
             return
 
         if policy_value >= 1:
-            self._record_result(item, "PASS", f"패스워드 최소 사용 기간이 {policy_value}일로 적절하게 설정되어 있습니다.",
+            self._record_result(item, "COMPLIANT", f"패스워드 최소 사용 기간이 {policy_value}일로 적절하게 설정되어 있습니다.",
                                 current_value=f"{policy_value}일", recommended_value="1일 이상")
         else:
             self._record_result(item, "VULNERABLE",
@@ -282,7 +282,7 @@ class AccountManagementAudit(AuditModule):
             return
 
         if policy_value <= 90 and policy_value > 0:
-            self._record_result(item, "PASS", f"패스워드 최대 사용 기간이 {policy_value}일로 적절하게 설정되어 있습니다.",
+            self._record_result(item, "COMPLIANT", f"패스워드 최대 사용 기간이 {policy_value}일로 적절하게 설정되어 있습니다.",
                                 current_value=f"{policy_value}일", recommended_value="90일 이내 (0 제외)")
         elif policy_value == 0:
             self._record_result(item, "VULNERABLE", "패스워드 최대 사용 기간이 '0'(만료되지 않음)으로 설정되어 있습니다. 90일 이내로 설정하십시오.",
@@ -320,7 +320,7 @@ class AccountManagementAudit(AuditModule):
             return
 
         if policy_value >= 24:
-            self._record_result(item, "PASS", f"패스워드 기록 강제 적용이 {policy_value}개로 적절하게 설정되어 있습니다.",
+            self._record_result(item, "COMPLIANT", f"패스워드 기록 강제 적용이 {policy_value}개로 적절하게 설정되어 있습니다.",
                                 current_value=f"{policy_value}개", recommended_value="24개 이상")
         else:
             self._record_result(item, "VULNERABLE",
@@ -365,7 +365,7 @@ class AccountManagementAudit(AuditModule):
             return
 
         if policy_value <= 600 and policy_value > 0: # 0은 "재설정 안 함"으로 취약
-            self._record_result(item, "PASS",
+            self._record_result(item, "COMPLIANT",
                                 f"계정 잠금 카운터 재설정 기간이 {policy_value/60}분({policy_value}초)으로 적절하게 설정되어 있습니다.",
                                 current_value=f"{policy_value/60}분", recommended_value="10분 이내 (0 제외)")
         else:
@@ -390,7 +390,7 @@ class AccountManagementAudit(AuditModule):
             return
 
         if policy_value == 1:
-            self._record_result(item, "PASS", "마지막 로그온 시간 기록 정책이 '사용'으로 설정되어 있습니다.",
+            self._record_result(item, "COMPLIANT", "마지막 로그온 시간 기록 정책이 '사용'으로 설정되어 있습니다.",
                                 current_value="사용 (1)", recommended_value="사용 (1)")
         else:
             self._record_result(item, "VULNERABLE", "마지막 로그온 시간 기록 정책이 '사용 안 함'으로 설정되어 있습니다. '사용'으로 변경하십시오.",
@@ -413,7 +413,7 @@ class AccountManagementAudit(AuditModule):
             return
 
         if policy_value == 1:
-            self._record_result(item, "PASS", "로컬 계정의 빈 암호 사용 제한 정책이 '사용'으로 설정되어 있습니다.",
+            self._record_result(item, "COMPLIANT", "로컬 계정의 빈 암호 사용 제한 정책이 '사용'으로 설정되어 있습니다.",
                                 current_value="사용 (1)", recommended_value="사용 (1)")
         else:
             self._record_result(item, "VULNERABLE", "로컬 계정의 빈 암호 사용 제한 정책이 '사용 안 함'으로 설정되어 있습니다. '사용'으로 변경하십시오.",

@@ -3,3 +3,5 @@ venv/
 audit_reports/
 build/
 dist/
+debug.log
+python/

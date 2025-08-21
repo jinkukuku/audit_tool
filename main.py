@@ -106,11 +106,13 @@ class SecurityAuditEngine:
         logging.info("점검 보고서를 생성합니다.")
         total_audits = len(self.audit_results)
         vulnerable_count = sum(1 for r in self.audit_results if r['status'] == 'VULNERABLE')
-        
+        compliant_count = sum(1 for r in self.audit_results if r['status'] == 'COMPLIANT')
+
         report_summary = {
             "총 점검 항목": total_audits,
             "취약 항목": vulnerable_count,
-            "양호 항목": total_audits - vulnerable_count
+            "양호 항목": compliant_count,
+            "확인 필요":  total_audits - vulnerable_count - compliant_count
         }
 
         print("\n--- 점검 요약 ---")
@@ -230,7 +232,7 @@ class SecurityAuditEngine:
 
         total = len(self.audit_results)
         vulnerable = sum(1 for r in self.audit_results if r.get("status") == "VULNERABLE")
-        passed = sum(1 for r in self.audit_results if r.get("status") == "SAFE")
+        passed = sum(1 for r in self.audit_results if r.get("status") == "COMPLIANT")
         unknown = total - vulnerable - passed
 
         ts = datetime.datetime.utcnow().isoformat() + "Z"
@@ -318,7 +320,7 @@ class DBViewer:
         latest_run_id = latest_run[0]
         print(f"\n--- 최근 검사 상세 결과 (실행 ID: {latest_run_id}) ---")
         
-        cur.execute("SELECT code, status, risk, item, reason FROM audits WHERE run_id = ?", (latest_run_id,))
+        cur.execute("SELECT code, status, risk, item, reason FROM audits WHERE run_id = ? ORDER BY code ASC", (latest_run_id,))
         rows = cur.fetchall()
         conn.close()
 

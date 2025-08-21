@@ -149,7 +149,7 @@ class ServiceManagementAudit(AuditModule):
                 vulnerable_services.append(f"{service} (상태: {status}, 시작 유형: {start_type})")
 
         if not vulnerable_services:
-            self._record_result(item, "PASS", "불필요하다고 판단되는 서비스가 실행 중이지 않습니다.",
+            self._record_result(item, "COMPLIANT", "불필요하다고 판단되는 서비스가 실행 중이지 않습니다.",
                                 current_value="모든 불필요 서비스 중지", recommended_value="불필요 서비스 중지 및 사용 안 함")
         else:
             self._record_result(item, "VULNERABLE",
@@ -168,7 +168,7 @@ class ServiceManagementAudit(AuditModule):
         status, start_type = self._get_service_status("W3SVC")
 
         if status == "Stopped" and start_type == "Disabled":
-            self._record_result(item, "PASS", "IIS 서비스(World Wide Web Publishing Service)가 중지 및 사용 안 함으로 설정되어 있습니다.",
+            self._record_result(item, "COMPLIANT", "IIS 서비스(World Wide Web Publishing Service)가 중지 및 사용 안 함으로 설정되어 있습니다.",
                                 current_value=f"상태: {status}, 시작 유형: {start_type}",
                                 recommended_value="중지 및 사용 안 함")
         elif status == "Running":
@@ -211,7 +211,7 @@ class ServiceManagementAudit(AuditModule):
                                     current_value="활성화 (enabled=true)",
                                     recommended_value="비활성화 (enabled=false)")
             else:
-                self._record_result(item, "PASS",
+                self._record_result(item, "COMPLIANT",
                                     "IIS 디렉터리 리스팅이 비활성화되어 있습니다.",
                                     current_value="비활성화 (enabled=false)",
                                     recommended_value="비활성화 (enabled=false)")
@@ -257,7 +257,7 @@ class ServiceManagementAudit(AuditModule):
                                     current_value=f"Everyone 권한: {cmd_output.splitlines()[-1]}", # 마지막 라인에 권한 정보가 있을 수 있음
                                     recommended_value="Everyone에 쓰기/수정/모든 권한 없음")
             else:
-                self._record_result(item, "PASS",
+                self._record_result(item, "COMPLIANT",
                                     f"CGI 스크립트 디렉터리 '{cgi_script_dir}'에 Everyone에 대한 쓰기/수정/모든 권한이 부여되어 있지 않습니다.",
                                     current_value=f"Everyone 권한: {cmd_output.splitlines()[-1]}",
                                     recommended_value="Everyone에 쓰기/수정/모든 권한 없음")
@@ -291,7 +291,7 @@ class ServiceManagementAudit(AuditModule):
                                     current_value="활성화 (enableParentPaths=true)",
                                     recommended_value="비활성화 (enableParentPaths=false)")
             else:
-                self._record_result(item, "PASS",
+                self._record_result(item, "COMPLIANT",
                                     "IIS 상위 디렉터리 접근(부모 경로 사용)이 비활성화되어 있습니다.",
                                     current_value="비활성화 (enableParentPaths=false)",
                                     recommended_value="비활성화 (enableParentPaths=false)")
@@ -323,7 +323,7 @@ class ServiceManagementAudit(AuditModule):
                                 current_value=f"존재: {', '.join(found_vulnerable_dirs)}",
                                 recommended_value="제거")
         else:
-            self._record_result(item, "PASS", "불필요한 IIS 샘플 디렉터리가 존재하지 않습니다.",
+            self._record_result(item, "COMPLIANT", "불필요한 IIS 샘플 디렉터리가 존재하지 않습니다.",
                                 current_value="없음",
                                 recommended_value="제거")
 
@@ -355,7 +355,7 @@ class ServiceManagementAudit(AuditModule):
                                     current_value="LocalSystem 사용",
                                     recommended_value="ApplicationPoolIdentity 또는 NetworkService")
             else:
-                self._record_result(item, "PASS",
+                self._record_result(item, "COMPLIANT",
                                     "모든 IIS Application Pool이 최소 권한 계정으로 설정되어 있습니다.",
                                     current_value="LocalSystem 미사용",
                                     recommended_value="ApplicationPoolIdentity 또는 NetworkService")
@@ -403,7 +403,7 @@ class ServiceManagementAudit(AuditModule):
                                     current_value=f"존재: {len(found_links)}개",
                                     recommended_value="링크 파일 없음")
             else:
-                self._record_result(item, "PASS", "IIS 웹 홈 디렉터리 내에 바로가기/링크 파일이 존재하지 않습니다.",
+                self._record_result(item, "COMPLIANT", "IIS 웹 홈 디렉터리 내에 바로가기/링크 파일이 존재하지 않습니다.",
                                     current_value="없음",
                                     recommended_value="링크 파일 없음")
         except Exception as e:
@@ -459,7 +459,7 @@ class ServiceManagementAudit(AuditModule):
                 vulnerable_settings.append(f"허용되는 최대 콘텐츠 길이 (현재: {max_allowed_content_length} bytes)")
 
             if not vulnerable_settings:
-                self._record_result(item, "PASS",
+                self._record_result(item, "COMPLIANT",
                                     "IIS 파일 업로드 및 다운로드 용량 제한이 적절하게 설정되어 있습니다. (5MB 이하)",
                                     current_value=f"버퍼링: {buffering_limit}, 요청 엔터티: {max_request_entity}, 콘텐츠 길이: {max_allowed_content_length}",
                                     recommended_value="모두 5MB 이하")
@@ -511,7 +511,7 @@ class ServiceManagementAudit(AuditModule):
                     is_vulnerable_handlers = True
 
             if not is_vulnerable_req_filtering and not is_vulnerable_handlers:
-                self._record_result(item, "PASS",
+                self._record_result(item, "COMPLIANT",
                                     "IIS DB 연결 취약점 관련 .asa, .asax 매핑 설정이 적절합니다. (매핑이 없거나 제한됨)",
                                     current_value="매핑 없음 또는 제한됨",
                                     recommended_value="매핑 없음 또는 제한됨")
@@ -567,7 +567,7 @@ class ServiceManagementAudit(AuditModule):
                                     current_value=f"존재: {', '.join(vulnerable_vdirs)}",
                                     recommended_value="제거")
             else:
-                self._record_result(item, "PASS", "불필요한 IIS 가상 디렉터리(IISAdmin, IISAdminpwd)가 존재하지 않습니다.",
+                self._record_result(item, "COMPLIANT", "불필요한 IIS 가상 디렉터리(IISAdmin, IISAdminpwd)가 존재하지 않습니다.",
                                     current_value="없음",
                                     recommended_value="제거")
         except Exception as e:
@@ -636,7 +636,7 @@ class ServiceManagementAudit(AuditModule):
                                     current_value=f"취약 파일 존재: {len(vulnerable_files)}개",
                                     recommended_value="Everyone 권한 제거 (정적 파일은 Read만 허용)")
             else:
-                self._record_result(item, "PASS", "IIS 데이터 파일에 Everyone 권한이 적절하게 제한되어 있습니다.",
+                self._record_result(item, "COMPLIANT", "IIS 데이터 파일에 Everyone 권한이 적절하게 제한되어 있습니다.",
                                     current_value="적절",
                                     recommended_value="Everyone 권한 제거 (정적 파일은 Read만 허용)")
         except Exception as e:
@@ -678,7 +678,7 @@ class ServiceManagementAudit(AuditModule):
                                     current_value=f"존재: {', '.join(found_vulnerable_mappings)}",
                                     recommended_value="제거")
             else:
-                self._record_result(item, "PASS", "미사용 또는 취약한 스크립트 매핑이 존재하지 않습니다.",
+                self._record_result(item, "COMPLIANT", "미사용 또는 취약한 스크립트 매핑이 존재하지 않습니다.",
                                     current_value="없음",
                                     recommended_value="제거")
         except Exception as e:
@@ -698,7 +698,7 @@ class ServiceManagementAudit(AuditModule):
             iis_major_version = int(iis_version_output) if iis_version_output else 0
 
             if iis_major_version >= 6: # IIS 6.0 이상
-                self._record_result(item, "PASS", "IIS 6.0 이상 버전이므로 Exec 명령어 쉘 호출 취약점에 해당하지 않습니다.",
+                self._record_result(item, "COMPLIANT", "IIS 6.0 이상 버전이므로 Exec 명령어 쉘 호출 취약점에 해당하지 않습니다.",
                                     current_value=f"IIS Major Version: {iis_major_version}",
                                     recommended_value="IIS 6.0 이상")
                 return
@@ -716,7 +716,7 @@ class ServiceManagementAudit(AuditModule):
                 ssi_enable_cmd_directive = 0
 
             if ssi_enable_cmd_directive == 0:
-                self._record_result(item, "PASS",
+                self._record_result(item, "COMPLIANT",
                                     "IIS Exec 명령어 쉘 호출이 비활성화되어 있습니다.",
                                     current_value="비활성화 (0)",
                                     recommended_value="비활성화 (0)")
@@ -743,7 +743,7 @@ class ServiceManagementAudit(AuditModule):
         try:
             iis_status, _ = self._get_service_status("W3SVC")
             if iis_status != "Running":
-                self._record_result(item, "PASS", "IIS 서비스가 실행 중이지 않아 WebDAV 취약점에 해당하지 않습니다.")
+                self._record_result(item, "COMPLIANT", "IIS 서비스가 실행 중이지 않아 WebDAV 취약점에 해당하지 않습니다.")
                 return
 
             # 1. DisableWebDAV 레지스트리 값 확인 (Windows 2000)
@@ -756,7 +756,7 @@ class ServiceManagementAudit(AuditModule):
             )
 
             if disable_webdav == 1:
-                self._record_result(item, "PASS", "WebDAV가 레지스트리를 통해 비활성화되어 있습니다.",
+                self._record_result(item, "COMPLIANT", "WebDAV가 레지스트리를 통해 비활성화되어 있습니다.",
                                     current_value="DisableWebDAV=1", recommended_value="DisableWebDAV=1")
                 return
 
@@ -774,7 +774,7 @@ class ServiceManagementAudit(AuditModule):
                                         current_value="WebDAV enabled=true",
                                         recommended_value="WebDAV enabled=false")
                 else:
-                    self._record_result(item, "PASS", "IIS WebDAV가 비활성화되어 있습니다.",
+                    self._record_result(item, "COMPLIANT", "IIS WebDAV가 비활성화되어 있습니다.",
                                         current_value="WebDAV enabled=false",
                                         recommended_value="WebDAV enabled=false")
             else:
@@ -811,7 +811,7 @@ class ServiceManagementAudit(AuditModule):
                     is_vulnerable = True
             
             if not is_vulnerable:
-                self._record_result(item, "PASS",
+                self._record_result(item, "COMPLIANT",
                                     "모든 네트워크 인터페이스에서 NetBIOS over TCP/IP 바인딩이 비활성화되어 있습니다.",
                                     current_value=f"NetbiosOptions: {', '.join(current_values)}",
                                     recommended_value="모두 2 (사용 안 함)")
@@ -834,7 +834,7 @@ class ServiceManagementAudit(AuditModule):
         status, start_type = self._get_service_status("FTPSVC") # FTP Publishing Service
 
         if status == "Stopped" and start_type == "Disabled":
-            self._record_result(item, "PASS", "FTP Publishing Service가 중지 및 사용 안 함으로 설정되어 있습니다.",
+            self._record_result(item, "COMPLIANT", "FTP Publishing Service가 중지 및 사용 안 함으로 설정되어 있습니다.",
                                 current_value=f"상태: {status}, 시작 유형: {start_type}",
                                 recommended_value="중지 및 사용 안 함")
         elif status == "Running":
@@ -859,7 +859,7 @@ class ServiceManagementAudit(AuditModule):
         try:
             ftp_status, _ = self._get_service_status("FTPSVC")
             if ftp_status != "Running":
-                self._record_result(item, "PASS", "FTP 서비스가 실행 중이지 않아 Anonymous FTP 취약점에 해당하지 않습니다.")
+                self._record_result(item, "COMPLIANT", "FTP 서비스가 실행 중이지 않아 Anonymous FTP 취약점에 해당하지 않습니다.")
                 return
 
             # appcmd.exe를 사용하여 FTP 인증 설정 확인
@@ -879,7 +879,7 @@ class ServiceManagementAudit(AuditModule):
                                     current_value="익명 인증 활성화",
                                     recommended_value="익명 인증 비활성화")
             else:
-                self._record_result(item, "PASS",
+                self._record_result(item, "COMPLIANT",
                                     "Anonymous FTP 접속이 비활성화되어 있습니다.",
                                     current_value="익명 인증 비활성화",
                                     recommended_value="익명 인증 비활성화")
@@ -917,7 +917,7 @@ class ServiceManagementAudit(AuditModule):
                                     current_value="모든 IP 허용 또는 미설정",
                                     recommended_value="특정 IP만 허용")
             else:
-                self._record_result(item, "PASS",
+                self._record_result(item, "COMPLIANT",
                                     "FTP 접근 제어 설정이 적용되어 있습니다. (특정 IP만 허용 또는 명시적 거부)",
                                     current_value="특정 IP 제한",
                                     recommended_value="특정 IP만 허용")
@@ -935,7 +935,7 @@ class ServiceManagementAudit(AuditModule):
         try:
             dns_status, _ = self._get_service_status("DNS") # DNS Server 서비스
             if dns_status != "Running":
-                self._record_result(item, "PASS", "DNS 서비스가 실행 중이지 않아 DNS Zone Transfer 취약점에 해당하지 않습니다.")
+                self._record_result(item, "COMPLIANT", "DNS 서비스가 실행 중이지 않아 DNS Zone Transfer 취약점에 해당하지 않습니다.")
                 return
 
             # DNS 서버의 모든 Zone 목록 가져오기
@@ -970,7 +970,7 @@ class ServiceManagementAudit(AuditModule):
                 # 1, 2, 3은 양호
             
             if not vulnerable_zones:
-                self._record_result(item, "PASS", "모든 DNS Zone의 Zone Transfer 설정이 적절합니다.",
+                self._record_result(item, "COMPLIANT", "모든 DNS Zone의 Zone Transfer 설정이 적절합니다.",
                                     current_value="적절",
                                     recommended_value="영역 전송 제한 또는 비허용")
             else:
@@ -991,7 +991,7 @@ class ServiceManagementAudit(AuditModule):
         try:
             iis_status, _ = self._get_service_status("W3SVC")
             if iis_status != "Running":
-                self._record_result(item, "PASS", "IIS 서비스가 실행 중이지 않아 RDS 취약점에 해당하지 않습니다.")
+                self._record_result(item, "COMPLIANT", "IIS 서비스가 실행 중이지 않아 RDS 취약점에 해당하지 않습니다.")
                 return
 
             # 레지스트리 HKLM\SYSTEM\CurrentControlSet\Services\W3SVC\Parameters\ADCLaunch
@@ -1011,7 +1011,7 @@ class ServiceManagementAudit(AuditModule):
                 has_rds_registry = True
 
             if not has_rds_registry:
-                self._record_result(item, "PASS", "RDS(Remote Data Services) 관련 레지스트리 키가 존재하지 않습니다.",
+                self._record_result(item, "COMPLIANT", "RDS(Remote Data Services) 관련 레지스트리 키가 존재하지 않습니다.",
                                     current_value="RDS 관련 레지스트리 없음",
                                     recommended_value="RDS 제거")
             else:
@@ -1045,7 +1045,7 @@ class ServiceManagementAudit(AuditModule):
                 return
 
             if min_encryption_level >= 4: # 4: 높음, 5: FIPS 규격
-                self._record_result(item, "PASS",
+                self._record_result(item, "COMPLIANT",
                                     f"터미널 서비스 암호화 수준이 '{min_encryption_level}'(높음 또는 FIPS 규격)으로 적절하게 설정되어 있습니다.",
                                     current_value=str(min_encryption_level),
                                     recommended_value="4 (높음) 또는 5 (FIPS 규격)")
@@ -1086,7 +1086,7 @@ class ServiceManagementAudit(AuditModule):
                                     current_value="버전 정보 노출",
                                     recommended_value="버전 정보 숨김")
             else:
-                self._record_result(item, "PASS", "IIS 웹 서비스 버전 정보가 HTTP 응답 헤더에 노출되어 있지 않습니다.",
+                self._record_result(item, "COMPLIANT", "IIS 웹 서비스 버전 정보가 HTTP 응답 헤더에 노출되어 있지 않습니다.",
                                     current_value="버전 정보 숨김",
                                     recommended_value="버전 정보 숨김")
         except Exception as e:
@@ -1102,7 +1102,7 @@ class ServiceManagementAudit(AuditModule):
         status, start_type = self._get_service_status("SNMPTRAP") # SNMP Service (SNMPTRAP)
 
         if status == "Stopped" and start_type == "Disabled":
-            self._record_result(item, "PASS", "SNMP 서비스가 중지 및 사용 안 함으로 설정되어 있습니다.",
+            self._record_result(item, "COMPLIANT", "SNMP 서비스가 중지 및 사용 안 함으로 설정되어 있습니다.",
                                 current_value=f"상태: {status}, 시작 유형: {start_type}",
                                 recommended_value="중지 및 사용 안 함")
         elif status == "Running":
@@ -1161,7 +1161,7 @@ class ServiceManagementAudit(AuditModule):
                                     current_value=f"취약한 스트링: {', '.join(vulnerable_strings)}",
                                     recommended_value="복잡한 커뮤니티 스트링 사용")
             else:
-                self._record_result(item, "PASS", "SNMP 서비스 커뮤니티 스트링이 적절하게 설정되어 있습니다.",
+                self._record_result(item, "COMPLIANT", "SNMP 서비스 커뮤니티 스트링이 적절하게 설정되어 있습니다.",
                                     current_value="적절",
                                     recommended_value="복잡한 커뮤니티 스트링 사용")
         except Exception as e:
@@ -1215,12 +1215,12 @@ class ServiceManagementAudit(AuditModule):
             
             # 만약 PermittedManagers 키가 존재하지만, 127.0.0.1 외에 다른 IP가 명시적으로 허용되지 않았다면 양호
             if not is_vulnerable and "127.0.0.1" in allowed_ips:
-                self._record_result(item, "PASS",
+                self._record_result(item, "COMPLIANT",
                                     "SNMP Access control이 적절하게 설정되어 있습니다. (127.0.0.1만 허용)",
                                     current_value=f"허용된 IP: {', '.join(allowed_ips)}",
                                     recommended_value="127.0.0.1만 허용")
             elif not allowed_ips: # PermittedManagers 키는 있지만 허용된 IP가 없는 경우
-                self._record_result(item, "PASS",
+                self._record_result(item, "COMPLIANT",
                                     "SNMP Access control이 설정되어 있으나, 명시적으로 허용된 IP가 없습니다. (모든 접근 차단으로 간주)",
                                     current_value="허용된 IP 없음",
                                     recommended_value="특정 IP만 허용")
@@ -1242,7 +1242,7 @@ class ServiceManagementAudit(AuditModule):
         status, start_type = self._get_service_status("DNS") # DNS Server 서비스
 
         if status == "Stopped" and start_type == "Disabled":
-            self._record_result(item, "PASS", "DNS 서비스가 중지 및 사용 안 함으로 설정되어 있습니다.",
+            self._record_result(item, "COMPLIANT", "DNS 서비스가 중지 및 사용 안 함으로 설정되어 있습니다.",
                                 current_value=f"상태: {status}, 시작 유형: {start_type}",
                                 recommended_value="중지 및 사용 안 함")
         elif status == "Running":
@@ -1326,7 +1326,7 @@ class ServiceManagementAudit(AuditModule):
                 logging.warning(f"SMTP 배너 확인 중 오류 발생: {e}")
 
         if not vulnerable_banners:
-            self._record_result(item, "PASS", "HTTP/FTP/SMTP 서비스 배너 정보가 노출되지 않습니다.",
+            self._record_result(item, "COMPLIANT", "HTTP/FTP/SMTP 서비스 배너 정보가 노출되지 않습니다.",
                                 current_value="배너 숨김", recommended_value="배너 숨김")
         else:
             self._record_result(item, "VULNERABLE",
@@ -1344,7 +1344,7 @@ class ServiceManagementAudit(AuditModule):
         status, start_type = self._get_service_status("TlntSvr") # Telnet 서비스 이름
 
         if status == "Stopped" and start_type == "Disabled":
-            self._record_result(item, "PASS", "Telnet 서비스가 중지 및 사용 안 함으로 설정되어 있습니다.",
+            self._record_result(item, "COMPLIANT", "Telnet 서비스가 중지 및 사용 안 함으로 설정되어 있습니다.",
                                 current_value=f"상태: {status}, 시작 유형: {start_type}",
                                 recommended_value="중지 및 사용 안 함")
         elif status == "Running":
@@ -1385,7 +1385,7 @@ class ServiceManagementAudit(AuditModule):
                                     current_value=f"존재: {', '.join(dsn_names)}",
                                     recommended_value="불필요한 DSN/드라이브 제거")
             else:
-                self._record_result(item, "PASS", "불필요한 ODBC 데이터 소스(DSN)가 존재하지 않습니다. (OLE-DB 드라이브는 수동 확인 필요)",
+                self._record_result(item, "COMPLIANT", "불필요한 ODBC 데이터 소스(DSN)가 존재하지 않습니다. (OLE-DB 드라이브는 수동 확인 필요)",
                                     current_value="ODBC DSN 없음",
                                     recommended_value="불필요한 DSN/드라이브 제거")
         except Exception as e:
@@ -1421,7 +1421,7 @@ class ServiceManagementAudit(AuditModule):
 
             # 10분 = 10 * 60 * 1000 = 600000 밀리초
             if max_idle_time <= 600000:
-                self._record_result(item, "PASS",
+                self._record_result(item, "COMPLIANT",
                                     f"원격터미널 접속 타임아웃이 {max_idle_time/60000}분({max_idle_time}ms)으로 적절하게 설정되어 있습니다.",
                                     current_value=f"{max_idle_time/60000}분",
                                     recommended_value="10분 이하")
@@ -1475,7 +1475,7 @@ class ServiceManagementAudit(AuditModule):
                                     current_value=f"예약 작업 존재: {len(tasks)}개",
                                     recommended_value="불필요/의심스러운 작업 제거")
             else:
-                self._record_result(item, "PASS", "예약된 작업이 존재하지 않습니다.",
+                self._record_result(item, "COMPLIANT", "예약된 작업이 존재하지 않습니다.",
                                     current_value="예약 작업 없음",
                                     recommended_value="예약 작업 없음")
         except Exception as e:

@@ -70,7 +70,7 @@ class FilePermissionAudit(AuditModule):
                                 current_value=f"취약 디렉터리: {', '.join(vulnerable_dirs)}",
                                 recommended_value="Everyone에 쓰기/수정/모든 권한 없음")
         else:
-            self._record_result(item, "PASS", "주요 시스템 디렉터리에 Everyone에 대한 쓰기/수정/모든 권한이 없습니다.",
+            self._record_result(item, "COMPLIANT", "주요 시스템 디렉터리에 Everyone에 대한 쓰기/수정/모든 권한이 없습니다.",
                                 current_value="적절", recommended_value="Everyone에 쓰기/수정/모든 권한 없음")
 
 
@@ -115,7 +115,7 @@ class FilePermissionAudit(AuditModule):
                                 current_value=f"취약 디렉터리: {', '.join(vulnerable_log_dirs)}",
                                 recommended_value="Everyone에 쓰기/수정/모든 권한 없음")
         else:
-            self._record_result(item, "PASS", "주요 로그 디렉터리에 Everyone에 대한 쓰기/수정/모든 권한이 없습니다.",
+            self._record_result(item, "COMPLIANT", "주요 로그 디렉터리에 Everyone에 대한 쓰기/수정/모든 권한이 없습니다.",
                                 current_value="적절", recommended_value="Everyone에 쓰기/수정/모든 권한 없음")
 
     def check_w45_disk_volume_encryption(self):
@@ -141,7 +141,7 @@ class FilePermissionAudit(AuditModule):
                         current_volume = None # 다음 볼륨을 위해 초기화
                 
                 if not unencrypted_volumes:
-                    self._record_result(item, "PASS", "모든 디스크 볼륨이 암호화되어 있습니다.",
+                    self._record_result(item, "COMPLIANT", "모든 디스크 볼륨이 암호화되어 있습니다.",
                                         current_value="모든 볼륨 암호화됨", recommended_value="모든 볼륨 암호화")
                 else:
                     self._record_result(item, "VULNERABLE",
