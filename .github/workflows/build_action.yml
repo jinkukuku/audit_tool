@@ -32,14 +32,28 @@ jobs:
         run: |
           pyinstaller --onefile main.py --add-data "audit_modules:audit_modules"
           
-      - name: Upload artifacts
+      # Linux / macOS
+      - name: Upload artifacts (Linux/macOS)
+        if: runner.os != 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: main-artifacts-${{ matrix.os }}
           path: |
-            ${{ runner.os == 'Windows' && 'dist/main.exe' || 'dist/main' }}
+            dist/main
             audit_config.json
             audit_modules/**
+      
+      # Windows
+      - name: Upload artifacts (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-artifacts-${{ matrix.os }}
+          path: |
+            dist/main.exe
+            audit_config.json
+            audit_modules/**
+
 
 
         env:
