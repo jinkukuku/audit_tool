@@ -39,7 +39,7 @@ jobs:
         with:
           name: main-artifacts-${{ matrix.os }}
           path: |
-            dist/*
+            dist/main
             audit_config.json
             audit_modules/
 
