@@ -169,7 +169,7 @@ class SecurityManagementAudit(AuditModule):
                 vulnerable_permissions = True
 
             if admin_full_control and system_full_control and not vulnerable_permissions:
-                self._record_result(item, "PASS", "SAM 파일 접근 권한이 Administrator 및 System 그룹으로만 제한되어 있습니다.",
+                self._record_result(item, "COMPLIANT", "SAM 파일 접근 권한이 Administrator 및 System 그룹으로만 제한되어 있습니다.",
                                     current_value="제한됨", recommended_value="Administrator, System만 모든 권한")
             else:
                 self._record_result(item, "VULNERABLE",
@@ -220,7 +220,7 @@ class SecurityManagementAudit(AuditModule):
 
         # 10분 = 600초
         if screensaver_secure == 1 and screensaver_timeout <= 600:
-            self._record_result(item, "PASS",
+            self._record_result(item, "COMPLIANT",
                                 f"화면보호기가 활성화되어 있고, 잠금 시간이 {screensaver_timeout}초(10분 이내)로 적절하게 설정되어 있습니다.",
                                 current_value=f"활성, {screensaver_timeout}초",
                                 recommended_value="활성, 600초 이하")
@@ -255,7 +255,7 @@ class SecurityManagementAudit(AuditModule):
             return
 
         if policy_value == 0:
-            self._record_result(item, "PASS", "로그온 하지 않고 시스템 종료 허용 정책이 '사용 안 함'으로 설정되어 있습니다.",
+            self._record_result(item, "COMPLIANT", "로그온 하지 않고 시스템 종료 허용 정책이 '사용 안 함'으로 설정되어 있습니다.",
                                 current_value="사용 안 함 (0)", recommended_value="사용 안 함 (0)")
         else:
             self._record_result(item, "VULNERABLE",
@@ -302,7 +302,7 @@ class SecurityManagementAudit(AuditModule):
                 # Administrators 그룹의 SID는 S-1-5-32-544 입니다.
                 # 오직 Administrators 그룹의 SID만 포함되어 있는지 확인합니다.
                 if sids_str == "*S-1-5-32-544":
-                    self._record_result(item, "PASS",
+                    self._record_result(item, "COMPLIANT",
                                         "원격 시스템에서 강제로 시스템 종료 권한이 'Administrator' 그룹으로만 제한되어 있습니다.",
                                         current_value="Administrator만 허용",
                                         recommended_value="Administrator만 허용")
@@ -338,7 +338,7 @@ class SecurityManagementAudit(AuditModule):
             return
 
         if policy_value == 1:
-            self._record_result(item, "PASS", "SAM 계정과 공유의 익명 열거 허용 안 함 정책이 '사용'으로 설정되어 있습니다.",
+            self._record_result(item, "COMPLIANT", "SAM 계정과 공유의 익명 열거 허용 안 함 정책이 '사용'으로 설정되어 있습니다.",
                                 current_value="사용 (1)", recommended_value="사용 (1)")
         else:
             self._record_result(item, "VULNERABLE",
@@ -393,7 +393,7 @@ class SecurityManagementAudit(AuditModule):
                                 current_value=f"현재: {', '.join(current_values)}",
                                 recommended_value="AutoAdminLogon 비활성화 (0)")
         else:
-            self._record_result(item, "PASS", "Autologon 기능이 비활성화되어 있습니다.",
+            self._record_result(item, "COMPLIANT", "Autologon 기능이 비활성화되어 있습니다.",
                                 current_value=f"현재: {', '.join(current_values)}",
                                 recommended_value="AutoAdminLogon 비활성화 (0)")
 
@@ -416,7 +416,7 @@ class SecurityManagementAudit(AuditModule):
             return
 
         if policy_value == 0:
-            self._record_result(item, "PASS", "이동식 미디어 포맷 및 꺼내기 허용 정책이 '사용 안 함'으로 설정되어 있습니다.",
+            self._record_result(item, "COMPLIANT", "이동식 미디어 포맷 및 꺼내기 허용 정책이 '사용 안 함'으로 설정되어 있습니다.",
                                 current_value="사용 안 함 (0)", recommended_value="사용 안 함 (0)")
         else:
             self._record_result(item, "VULNERABLE",
@@ -480,7 +480,7 @@ class SecurityManagementAudit(AuditModule):
         # 다른 Dos 방어 레지스트리 항목들도 유사하게 점검 로직 추가 가능
 
         if not vulnerable_settings:
-            self._record_result(item, "PASS",
+            self._record_result(item, "COMPLIANT",
                                 "Dos 공격 방어 관련 주요 레지스트리 설정이 적절하게 설정되어 있습니다.",
                                 current_value=f"현재: {', '.join(current_values)}",
                                 recommended_value="EnableDeadGWDetect=0, SynAttackProtect=1")
@@ -509,7 +509,7 @@ class SecurityManagementAudit(AuditModule):
             return
 
         if policy_value == 1:
-            self._record_result(item, "PASS", "사용자가 프린터 드라이버를 설치할 수 없게 함 정책이 '사용'으로 설정되어 있습니다.",
+            self._record_result(item, "COMPLIANT", "사용자가 프린터 드라이버를 설치할 수 없게 함 정책이 '사용'으로 설정되어 있습니다.",
                                 current_value="사용 (1)", recommended_value="사용 (1)")
         else:
             self._record_result(item, "VULNERABLE",
@@ -540,7 +540,7 @@ class SecurityManagementAudit(AuditModule):
 
         # 레지스트리 값은 분 단위
         if auto_disconnect_minutes <= 15:
-            self._record_result(item, "PASS",
+            self._record_result(item, "COMPLIANT",
                                 f"세션 유휴 시간이 {auto_disconnect_minutes}분(15분 이내)으로 적절하게 설정되어 있습니다.",
                                 current_value=f"{auto_disconnect_minutes}분",
                                 recommended_value="15분 이하")
@@ -573,7 +573,7 @@ class SecurityManagementAudit(AuditModule):
         )
 
         if legal_notice_caption and legal_notice_text:
-            self._record_result(item, "PASS", "로그온 시 경고 메시지가 적절하게 설정되어 있습니다.",
+            self._record_result(item, "COMPLIANT", "로그온 시 경고 메시지가 적절하게 설정되어 있습니다.",
                                 current_value=f"제목: '{legal_notice_caption}', 내용: '{legal_notice_text[:50]}...'",
                                 recommended_value="경고 메시지 설정")
         else:
@@ -631,7 +631,7 @@ class SecurityManagementAudit(AuditModule):
 
         # 권고: 3, 4, 5
         if policy_value >= 3:
-            self._record_result(item, "PASS",
+            self._record_result(item, "COMPLIANT",
                                 f"LAN Manager 인증 수준이 '{policy_value}'(NTLMv2 응답만 보내기 이상)으로 적절하게 설정되어 있습니다.",
                                 current_value=str(policy_value),
                                 recommended_value="3 이상 (NTLMv2 응답만 보내기 이상)")
@@ -660,7 +660,7 @@ class SecurityManagementAudit(AuditModule):
             return
 
         if policy_value == 1:
-            self._record_result(item, "PASS", "보안 채널 데이터 디지털 암호화 또는 서명 정책이 '사용'으로 설정되어 있습니다.",
+            self._record_result(item, "COMPLIANT", "보안 채널 데이터 디지털 암호화 또는 서명 정책이 '사용'으로 설정되어 있습니다.",
                                 current_value="사용 (1)", recommended_value="사용 (1)")
         else:
             self._record_result(item, "VULNERABLE",
@@ -691,7 +691,7 @@ class SecurityManagementAudit(AuditModule):
 
         # 레지스트리 값은 일 단위
         if max_password_age_days <= 30:
-            self._record_result(item, "PASS",
+            self._record_result(item, "COMPLIANT",
                                 f"컴퓨터 계정 암호 최대 사용 기간이 {max_password_age_days}일(30일 이내)으로 적절하게 설정되어 있습니다.",
                                 current_value=f"{max_password_age_days}일",
                                 recommended_value="30일 이내")
@@ -763,7 +763,7 @@ class SecurityManagementAudit(AuditModule):
                                 current_value=f"시작프로그램 존재: {len(startup_locations)}개",
                                 recommended_value="불필요/의심스러운 시작프로그램 제거")
         else:
-            self._record_result(item, "PASS", "주요 시작프로그램 위치에서 의심스러운 항목이 발견되지 않았습니다.",
+            self._record_result(item, "COMPLIANT", "주요 시작프로그램 위치에서 의심스러운 항목이 발견되지 않았습니다.",
                                 current_value="시작프로그램 없음",
                                 recommended_value="불필요/의심스러운 시작프로그램 제거")
 
@@ -833,7 +833,7 @@ class SecurityManagementAudit(AuditModule):
                                     current_value=f"취약 인스턴스: {', '.join([i.split(' ')[0] for i in vulnerable_instances])}",
                                     recommended_value="Windows 인증 모드 (LoginMode=1)")
             else:
-                self._record_result(item, "PASS", "모든 SQL Server 인스턴스가 Windows 인증 모드를 사용하고 있습니다.",
+                self._record_result(item, "COMPLIANT", "모든 SQL Server 인스턴스가 Windows 인증 모드를 사용하고 있습니다.",
                                     current_value="Windows 인증 모드",
                                     recommended_value="Windows 인증 모드 (LoginMode=1)")
         except Exception as e:

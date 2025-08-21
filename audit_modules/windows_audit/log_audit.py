@@ -69,7 +69,7 @@ class LogManagementAudit(AuditModule):
                     vulnerable_policies.append(f"{category} (현재: 확인 불가, 권고: {recommended_setting})")
 
             if not vulnerable_policies:
-                self._record_result(item, "PASS", "주요 감사 정책이 적절하게 설정되어 있습니다.",
+                self._record_result(item, "COMPLIANT", "주요 감사 정책이 적절하게 설정되어 있습니다.",
                                     current_value="적절", recommended_value="권고 설정 준수")
             else:
                 self._record_result(item, "VULNERABLE",
@@ -133,7 +133,7 @@ class LogManagementAudit(AuditModule):
                                     current_value=f"크기: {current_max_size_mb:.0f}MB, 보존: {current_retention_days}일",
                                     recommended_value=f"크기: {recommended_max_size_mb}MB 이상, 보존: {recommended_retention_days}일 이상 또는 0")
             else:
-                self._record_result(item, "PASS",
+                self._record_result(item, "COMPLIANT",
                                     f"{log_type} 로그 파일 크기 및 보존 기간이 적절하게 설정되어 있습니다.",
                                     current_value=f"크기: {current_max_size_mb:.0f}MB, 보존: {current_retention_days}일",
                                     recommended_value=f"크기: {recommended_max_size_mb}MB 이상, 보존: {recommended_retention_days}일 이상 또는 0")
