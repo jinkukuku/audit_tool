@@ -39,6 +39,15 @@ jobs:
         with:
           name: main-${{ matrix.os }}
           path: dist/*
+          
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-artifacts-${{ matrix.os }}
+          path: |
+            dist/*
+            audit_config
+            audit_modules/
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
