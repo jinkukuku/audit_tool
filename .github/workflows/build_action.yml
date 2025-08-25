@@ -31,14 +31,17 @@ jobs:
         run: |
           pyinstaller --onefile main.py --add-data "audit_modules:audit_modules"
 
-      # Move executable out of dist/
-      - name: Move executable out of dist
-        run: |
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            move dist\\main.exe main.exe
-          else
-            mv dist/main main
-          fi
+      # Linux/macOS
+      - name: Move executable out of dist (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: mv dist/main main
+
+      # Windows
+      - name: Move executable out of dist (Windows)
+        if: runner.os == 'Windows'
+        run: move dist\main.exe main.exe
+        shell: powershell
+
 
       # Upload artifacts
       - name: Upload artifacts
