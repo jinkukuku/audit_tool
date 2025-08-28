@@ -1,9 +1,13 @@
 name: Build and Release Executables
 
 on:
-  pull_request:
-    branches: [ "master" ]
+  push:
+    tags:
+      - "v*.*.*"   # v1.0.0 형식 태그를 push할 때 실행됨
   workflow_dispatch:
+
+permissions:
+  contents: write   # Release 생성에 필요한 권한
 
 jobs:
   build:
@@ -60,16 +64,12 @@ jobs:
         with:
           path: ./artifacts
 
-      - name: Generate release tag
-        id: vars
-        run: echo "TAG=release-$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
-
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ env.TAG }}
-          name: Release ${{ env.TAG }}
+          tag_name: ${{ github.ref_name }}   # push된 태그명 (예: v1.0.0)
+          name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
           files: |
