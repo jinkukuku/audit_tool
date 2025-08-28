@@ -26,7 +26,7 @@
 >     sudo python3 ./main.py
 >     ```
 > - Python 없을 시
->   - Release에 들어가 release-package-master.zip 다운로드
+>   - 최근 Release에 들어가 release-package-[version].zip 다운로드
 >   - 압축 해제 후 해당하는 OS 폴더의 실행파일 실행 (Linux : main, Windows : main.exe)
 
 
