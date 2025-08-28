@@ -75,6 +75,6 @@ jobs:
           files: |
             artifacts/**/main*
             artifacts/**/audit_config.json
-            artifacts/**/audit_modules/**
+            artifacts/**/audit_modules/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
