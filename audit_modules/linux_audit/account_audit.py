@@ -29,6 +29,13 @@ class AccountManagementAudit(BaseAuditModule):
         # 공통 : 4,50,51,52
         self.U_04()
         self.U_44()
+
+        # Linux로 통합
+        self.U_46()
+        self.U_47()
+        self.U_48()
+        self.U_49()
+
         self.U_50()
         self.U_51()
         self.U_52()

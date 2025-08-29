@@ -107,6 +107,42 @@ class PlatformUtils:
         return None
 
     @staticmethod
+    def is_file_owned_by_root_and_permission_safe(filepath, max_permission):
+        """
+        파일의 소유자가 root이고, 지정된 최대 권한보다 낮거나 같은지 확인합니다.
+        Args:
+            filepath (str): 파일 경로.
+            max_permission (int): 허용되는 최대 8진수 권한 (예: 644).
+        Returns:
+            bool: 양호(True) 또는 취약(False).
+        """
+        try:
+            if not os.path.exists(filepath):
+                return False, f"파일이 존재하지 않습니다: {filepath}"
+            
+            stat_info = os.stat(filepath)
+            
+            # 소유자 확인
+            file_owner = pwd.getpwuid(stat_info.st_uid).pw_name
+            if file_owner != 'root':
+                return False, f"소유자가 root가 아닙니다. 현재 소유자: {file_owner}"
+
+            # 권한 확인
+            # os.stat().st_mode 값은 권한 외의 정보도 포함하므로 순수 권한만 추출
+            permissions = oct(stat_info.st_mode)[-3:]
+            
+            if int(permissions) > max_permission:
+                return False, f"권한이 {max_permission}보다 높습니다. 현재 권한: {permissions}"
+
+            return True, "양호"
+        except FileNotFoundError:
+            return True, "파일이 존재하지 않으므로 양호합니다." # 파일이 없으면 양호로 간주
+        except Exception as e:
+            logging.error(f"파일 검증 중 오류 발생: {filepath} - {e}")
+            return False, f"파일 검증 중 오류 발생: {e}"
+
+
+    @staticmethod
     def check_file_exists(filepath):
         """
         파일이 존재하는지 확인합니다.
@@ -117,3 +153,21 @@ class PlatformUtils:
         """
         return os.path.exists(filepath)
 
+    @staticmethod
+    def read_file_content(filepath):
+        """
+        파일의 내용을 읽어 반환합니다.
+        Args:
+            filepath (str): 파일 경로.
+        Returns:
+            str: 파일 내용 또는 None (오류 시).
+        """
+        try:
+            with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+                return f.read()
+        except FileNotFoundError:
+            logging.error(f"파일을 찾을 수 없습니다: {filepath}")
+            return None
+        except Exception as e:
+            logging.error(f"파일 내용 읽기 중 오류 발생: {e}")
+            return None

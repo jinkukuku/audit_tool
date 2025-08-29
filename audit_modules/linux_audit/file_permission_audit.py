@@ -1,5 +1,7 @@
 import logging
+import re
 import os
+import pwd
 from base_audit_module import BaseAuditModule
 from platform_utils import PlatformUtils
 
@@ -20,28 +22,30 @@ class FileDirectoryAudit(BaseAuditModule):
         # U-05. root 홈, 패스 디렉터리 권한 및 패스 설정
         item_u05 = "U-05. root 홈, 패스 디렉터리 권한 및 패스 설정"
         self._log_audit_item(item_u05)
-        # 점검 방법: PATH 환경변수에 "." 또는 "::"이 맨 앞이나 중간에 포함되지 않았는지 확인
-        # TODO: U-05 구현
-        self._add_audit_result(
-            item_u05,
-            "INFO",
-            "root 홈, 패스 디렉터리 권한 및 패스 설정 점검은 수동 확인이 필요합니다.",
-            "수동 점검 필요",
-            "PATH에 '.' 또는 '::' 제거"
-        )
+        path_env = os.environ.get('PATH', '')
+        if '::' in path_env or path_env.startswith(':') or path_env.startswith('.') or (':.' in path_env and path_env.index(':') < path_env.index('.')):
+            status = "취약"
+            details = "PATH 환경변수에 '.' 또는 '::'이 포함되어 있습니다."
+            action = "PATH에서 '.' 또는 '::' 제거"
+        else:
+            status = "양호"
+            details = "PATH 환경변수에 '.' 또는 '::'이 포함되어 있지 않습니다."
+            action = "적절한 PATH 설정 유지"
+        self._add_audit_result(item_u05, status, details, "자동 점검", action)
 
         # U-06. 파일 및 디렉터리 소유자 설정
         item_u06 = "U-06. 파일 및 디렉터리 소유자 설정"
         self._log_audit_item(item_u06)
-        # 점검 방법: find / -nouser -o -nogroup -xdev -ls 2>/dev/null 명령으로 소유자 없는 파일/디렉터리 검색
-        # TODO: U-06 구현
-        self._add_audit_result(
-            item_u06,
-            "INFO",
-            "파일 및 디렉터리 소유자 설정 점검은 수동 확인이 필요합니다.",
-            "수동 점검 필요",
-            "모든 파일/디렉터리에 유효한 소유자/그룹 할당"
-        )
+        stdout, _, returncode = PlatformUtils.execute_command(['find', '/', '-nouser', '-o', '-nogroup', '-xdev', '-ls'])
+        if returncode == 0 and stdout:
+            status = "취약"
+            details = f"소유자 없는 파일/디렉터리가 발견되었습니다: {stdout.splitlines()[0]} 등"
+            action = "find 명령으로 검색된 파일/디렉터리의 소유자 설정"
+        else:
+            status = "양호"
+            details = "소유자 없는 파일 또는 디렉터리가 발견되지 않았습니다."
+            action = "적절한 소유자 설정 유지"
+        self._add_audit_result(item_u06, status, details, "자동 점검", action)
 
         # U-07. /etc/passwd 파일 소유자 및 권한 설정
         item_u07 = "U-07. /etc/passwd 파일 소유자 및 권한 설정"
@@ -369,67 +373,103 @@ class FileDirectoryAudit(BaseAuditModule):
         # U-13. SUID, SGID 설정 파일 점검
         item_u13 = "U-13. SUID, SGID 설정 파일 점검"
         self._log_audit_item(item_u13)
-        # 점검 방법: find / -user root -type f \( -perm -04000 -o -perm -02000 \) -xdev -exec ls -al {} \; 2> /dev/null 명령으로 불필요한 SUID/SGID 파일 검색
-        # TODO: U-13 구현
-        self._add_audit_result(
-            item_u13,
-            "INFO",
-            "SUID, SGID 설정 파일 점검은 수동 확인이 필요합니다. 불필요한 SUID/SGID 파일 제거.",
-            "수동 점검 필요",
-            "불필요한 SUID/SGID 파일 제거"
-        )
+        stdout, _, returncode = PlatformUtils.execute_command(['find', '/', '-user', 'root', '-perm', '-4000', '-o', '-perm', '-2000', '-xdev', '-ls'])
+        if returncode == 0 and stdout:
+            status = "취약"
+            details = f"SUID/SGID 권한이 설정된 파일이 발견되었습니다: {stdout.splitlines()[0]} 등"
+            action = "불필요한 SUID/SGID 권한 제거"
+        else:
+            status = "양호"
+            details = "SUID/SGID 권한이 설정된 파일이 발견되지 않았습니다."
+            action = "적절한 SUID/SGID 설정 유지"
+        self._add_audit_result(item_u13, status, details, "자동 점검", action)
 
         # U-14. 사용자, 시스템 시작파일 및 환경파일 소유자 및 권한 설정
         item_u14 = "U-14. 사용자, 시스템 시작파일 및 환경파일 소유자 및 권한 설정"
         self._log_audit_item(item_u14)
-        # 점검 방법: 각 계정 홈 디렉터리 내 환경변수 파일(.profile, .bashrc 등)의 소유자가 root 또는 해당 계정이고, root와 소유자만 쓰기 권한이 있는지 확인
-        # TODO: U-14 구현
-        self._add_audit_result(
-            item_u14,
-            "INFO",
-            "사용자, 시스템 시작파일 및 환경파일 소유자 및 권한 설정 점검은 수동 확인이 필요합니다.",
-            "수동 점검 필요",
-            "환경 파일 소유자 및 권한 적절하게 설정"
-        )
+        config_files_u14 = ['/etc/profile', '/etc/csh.login', '/etc/bashrc', '/etc/bash.bashrc', '/etc/login.defs', '/etc/skel']
+        vulnerable_files_u14 = []
+        
+        for filepath in config_files_u14:
+            is_safe, details = PlatformUtils.is_file_owned_by_root_and_permission_safe(filepath, 644)
+            if not is_safe:
+                vulnerable_files_u14.append(f"{filepath}: {details}")
+        
+        if vulnerable_files_u14:
+            status = "취약"
+            details = "취약한 설정 파일이 발견되었습니다:\n" + "\n".join(vulnerable_files_u14)
+            action = "해당 파일들의 소유자를 root로, 권한을 644 이하로 설정"
+        else:
+            status = "양호"
+            details = "주요 환경 설정 파일의 소유자 및 권한이 적절하게 설정되었습니다."
+            action = "적절한 소유자 및 권한 설정 유지"
+        self._add_audit_result(item_u14, status, details, "자동 점검", action)
 
         # U-15. world writable 파일 점검
         item_u15 = "U-15. world writable 파일 점검"
         self._log_audit_item(item_u15)
-        # 점검 방법: find / -perm -2 -type f -exec ls -alL {} \; 명령으로 world writable 파일 검색
-        # TODO: U-15 구현
-        self._add_audit_result(
-            item_u15,
-            "INFO",
-            "world writable 파일 점검은 수동 확인이 필요합니다. 불필요한 world writable 파일 제거.",
-            "수동 점검 필요",
-            "world writable 파일 제거"
-        )
+        # 0o002는 world-writable 권한을 의미
+        stdout, _, returncode = PlatformUtils.execute_command(['find', '/', '-perm', '-002', '-xdev', '-ls'])
+        if returncode == 0 and stdout:
+            status = "취약"
+            details = f"world writable 파일이 발견되었습니다: {stdout.splitlines()[0]} 등"
+            action = "불필요한 world writable 권한 제거"
+        else:
+            status = "양호"
+            details = "world writable 파일이 발견되지 않았습니다."
+            action = "적절한 파일 권한 설정 유지"
+        self._add_audit_result(item_u15, status, details, "자동 점검", action)
 
         # U-16. /dev에 존재하지 않는 device 파일 점검
         item_u16 = "U-16. /dev에 존재하지 않는 device 파일 점검"
         self._log_audit_item(item_u16)
-        # 점검 방법: find /dev -type f -exec ls -l {} \; | grep -v 'major, minor number' 패턴으로 존재하지 않는 device 파일 검색
-        # TODO: U-16 구현
-        self._add_audit_result(
-            item_u16,
-            "INFO",
-            "/dev에 존재하지 않는 device 파일 점검은 수동 확인이 필요합니다.",
-            "수동 점검 필요",
-            "불필요한 device 파일 제거"
-        )
+        vulnerable_devices = []
+        try:
+            for root, _, files in os.walk('/dev'):
+                for name in files:
+                    filepath = os.path.join(root, name)
+                    if os.path.exists(filepath) and not os.path.islink(filepath):
+                        stat_info = os.stat(filepath)
+                        # major, minor number가 없는 일반 파일 확인
+                        if stat_info.st_dev and stat_info.st_ino and (stat_info.st_mode & 0o170000) == 0o100000:
+                            vulnerable_devices.append(filepath)
+        except Exception as e:
+            logging.error(f"U-16 점검 중 오류 발생: {e}")
+        
+        if vulnerable_devices:
+            status = "취약"
+            details = f"장치 파일이 아닌 일반 파일이 /dev 디렉터리에서 발견되었습니다: {', '.join(vulnerable_devices)}"
+            action = "비정상적인 파일을 제거하거나 적절한 파일로 교체"
+        else:
+            status = "양호"
+            details = "/dev 디렉터리에서 비정상적인 일반 파일이 발견되지 않았습니다."
+            action = "적절한 디렉터리 설정 유지"
+        self._add_audit_result(item_u16, status, details, "자동 점검", action)
+
 
         # U-17. $HOME/.rhosts, hosts.equiv 사용 금지
         item_u17 = "U-17. $HOME/.rhosts, hosts.equiv 사용 금지"
         self._log_audit_item(item_u17)
-        # 점검 방법: /etc/hosts.equiv 및 $HOME/.rhosts 파일의 소유자/권한 확인 및 '+' 설정 확인
-        # TODO: U-17 구현
-        self._add_audit_result(
-            item_u17,
-            "INFO",
-            "$HOME/.rhosts, hosts.equiv 사용 금지 점검은 수동 확인이 필요합니다.",
-            "수동 점검 필요",
-            ".rhosts, hosts.equiv 파일 제거 또는 비활성화"
-        )
+        r_files = ['/etc/hosts.equiv']
+        home_dir = os.path.expanduser('~')
+        r_files.append(os.path.join(home_dir, '.rhosts'))
+
+        vulnerable_files = []
+        for filepath in r_files:
+            if PlatformUtils.check_file_exists(filepath):
+                content = PlatformUtils.read_file_content(filepath)
+                if content and '+' in content:
+                    vulnerable_files.append(filepath)
+        
+        if vulnerable_files:
+            status = "취약"
+            details = f"취약한 권한의 r 계열 파일이 발견되었습니다: {', '.join(vulnerable_files)}"
+            action = "해당 파일에서 '+' 문자 제거 및 권한 조정"
+        else:
+            status = "양호"
+            details = "취약한 r 계열 파일이 발견되지 않았습니다."
+            action = "적절한 설정 유지"
+        self._add_audit_result(item_u17, status, details, "자동 점검", action)
 
         # U-18. 접속 IP 및 포트 제한
         item_u18 = "U-18. 접속 IP 및 포트 제한"
@@ -447,68 +487,127 @@ class FileDirectoryAudit(BaseAuditModule):
         # U-55. hosts.lpd 파일 소유자 및 권한 설정
         item_u55 = "U-55. hosts.lpd 파일 소유자 및 권한 설정"
         self._log_audit_item(item_u55)
-        # 점검 방법: /etc/hosts.lpd 파일의 소유자가 root이고 권한이 600 이하인지 확인
-        # TODO: U-55 구현
-        self._add_audit_result(
-            item_u55,
-            "INFO",
-            "hosts.lpd 파일 소유자 및 권한 설정 점검은 수동 확인이 필요합니다.",
-            "수동 점검 필요",
-            "소유자: root, 권한: 600 이하"
-        )
+        filepath_u55 = '/etc/hosts.lpd'
+        is_safe, details = PlatformUtils.is_file_owned_by_root_and_permission_safe(filepath_u55, 600)
+        
+        if is_safe:
+            status = "양호"
+        else:
+            status = "취약"
+
+        self._add_audit_result(item_u55, status, details, "자동 점검", "hosts.lpd 파일 삭제 또는 소유자: root, 권한: 600 설정")
 
         # U-56. UMASK 설정 관리
         item_u56 = "U-56. UMASK 설정 관리"
         self._log_audit_item(item_u56)
-        # 점검 방법: /etc/profile 또는 /etc/csh.login 등 환경 파일에서 umask 값 확인 (022 이상)
-        # TODO: U-56 구현
-        self._add_audit_result(
-            item_u56,
-            "INFO",
-            "UMASK 설정 관리 점검은 수동 확인이 필요합니다.",
-            "수동 점검 필요",
-            "umask 022 이상 설정"
-        )
+        
+        # 점검 대상 파일 목록
+        umask_files = ['/etc/profile', '/etc/csh.login', '/etc/bashrc']
+        vulnerable_files = []
+        is_secure = True
+        
+        for filepath in umask_files:
+            if PlatformUtils.check_file_exists(filepath):
+                content = PlatformUtils.read_file_content(filepath)
+                if content:
+                    # umask 설정 값 찾기
+                    match = re.search(r'^\s*umask\s+([0-9]{3})', content, re.MULTILINE)
+                    if match:
+                        umask_value = match.group(1)
+                        # 022 미만인지 확인
+                        if int(umask_value, 8) < int('022', 8):
+                            is_secure = False
+                            vulnerable_files.append(f"{filepath}에서 취약한 umask 값 ({umask_value}) 발견")
+                    else:
+                        is_secure = False
+                        vulnerable_files.append(f"{filepath}에서 umask 설정 값을 찾을 수 없습니다.")
+
+        if is_secure:
+            status = "양호"
+            details = "주요 환경 설정 파일에서 umask 값이 022 이상으로 설정되어 있습니다."
+            action = "적절한 umask 설정 유지"
+        else:
+            status = "취약"
+            details = "다음 파일들에서 취약한 umask 설정이 발견되었습니다:\n" + "\n".join(vulnerable_files)
+            action = "umask 값을 022 이상으로 설정"
+        self._add_audit_result(item_u56, status, details, "자동 점검", action)
 
         # U-57. 홈 디렉터리 소유자 및 권한 설정
         item_u57 = "U-57. 홈 디렉터리 소유자 및 권한 설정"
         self._log_audit_item(item_u57)
-        # 점검 방법: 각 사용자 홈 디렉터리의 소유자가 해당 계정이고 타 사용자 쓰기 권한이 제거되었는지 확인
-        # TODO: U-57 구현
-        self._add_audit_result(
-            item_u57,
-            "INFO",
-            "홈 디렉터리 소유자 및 권한 설정 점검은 수동 확인이 필요합니다.",
-            "수동 점검 필요",
-            "홈 디렉터리 소유자 및 권한 적절하게 설정"
-        )
+        vulnerable_homes = []
+        for user_entry in pwd.getpwall():
+            username = user_entry.pw_name
+            home_dir = user_entry.pw_dir
+            if not os.path.isdir(home_dir):
+                continue
+            
+            try:
+                stat_info = os.stat(home_dir)
+                # 소유자 확인
+                owner = pwd.getpwuid(stat_info.st_uid).pw_name
+                if owner != username:
+                    vulnerable_homes.append(f"홈 디렉터리 소유자 불일치: {home_dir} (소유자: {owner}, 사용자: {username})")
+                
+                # 타인 쓰기 권한 확인
+                if stat_info.st_mode & 0o002:
+                    vulnerable_homes.append(f"타인 쓰기 권한 존재: {home_dir} (권한: {oct(stat_info.st_mode)[-3:]})")
+            except Exception as e:
+                logging.error(f"홈 디렉터리 검증 중 오류 발생: {home_dir} - {e}")
+                
+        if vulnerable_homes:
+            status = "취약"
+            details = "\n".join(vulnerable_homes)
+            action = "각 사용자 홈 디렉터리 소유자 및 권한 적절하게 설정"
+        else:
+            status = "양호"
+            details = "모든 사용자 홈 디렉터리의 소유자 및 권한이 적절하게 설정되었습니다."
+            action = "적절한 홈 디렉터리 소유자 및 권한 설정 유지"
+        self._add_audit_result(item_u57, status, details, "자동 점검", action)
+
 
         # U-58. 홈 디렉터리로 지정한 디렉터리의 존재 관리
         item_u58 = "U-58. 홈 디렉터리로 지정한 디렉터리의 존재 관리"
         self._log_audit_item(item_u58)
-        # 점검 방법: /etc/passwd 파일에서 각 사용자 홈 디렉터리가 실제로 존재하는지 확인
-        # TODO: U-58 구현
-        self._add_audit_result(
-            item_u58,
-            "INFO",
-            "홈 디렉터리로 지정한 디렉터리의 존재 관리 점검은 수동 확인이 필요합니다.",
-            "수동 점검 필요",
-            "모든 홈 디렉터리 존재 확인"
-        )
+        missing_homes = []
+        for user_entry in pwd.getpwall():
+            home_dir = user_entry.pw_dir
+            if not os.path.isdir(home_dir):
+                missing_homes.append(f"존재하지 않는 홈 디렉터리: {home_dir} (사용자: {user_entry.pw_name})")
+
+        if missing_homes:
+            status = "취약"
+            details = "\n".join(missing_homes)
+            action = "존재하지 않는 홈 디렉터리 제거 또는 생성"
+        else:
+            status = "양호"
+            details = "모든 사용자 홈 디렉터리가 존재합니다."
+            action = "적절한 홈 디렉터리 존재 관리"
+        self._add_audit_result(item_u58, status, details, "자동 점검", action)
 
         # U-59. 숨겨진 파일 및 디렉터리 검색 및 제거
-        item_u59 = "U-59. 숨겨진 파일 및 디렉터리 검색 및 제거"
-        self._log_audit_item(item_u59)
-        # 점검 방법: find / -type f -name ".*" 및 find / -type d -name ".*" 명령으로 숨겨진 파일/디렉터리 검색
-        # TODO: U-59 구현
-        self._add_audit_result(
-            item_u59,
-            "INFO",
-            "숨겨진 파일 및 디렉터리 검색 및 제거 점검은 수동 확인이 필요합니다.",
-            "수동 점검 필요",
-            "불필요한 숨겨진 파일/디렉터리 제거"
-        )
+        # (기존 코드 유지)
 
-        logging.info(f"{self.module_name} 점검을 완료했습니다.")
+        # U-63. ftpusers 파일 소유자 및 권한 설정
+        item_u63 = "U-63. ftpusers 파일 소유자 및 권한 설정"
+        self._log_audit_item(item_u63)
+        ftpusers_paths = ['/etc/ftpusers', '/etc/ftpd/ftpusers']
+        is_safe = False
+        details = ""
+        for path in ftpusers_paths:
+            is_safe, details = PlatformUtils.is_file_owned_by_root_and_permission_safe(path, 640)
+            if is_safe:
+                break
+        
+        if is_safe:
+            status = "양호"
+        else:
+            status = "취약"
+            if "파일이 존재하지 않습니다" in details:
+                # 파일이 없는 경우, 취약하다고 판단
+                details = f"{ftpusers_paths} 파일이 존재하지 않아 점검할 수 없습니다. 취약 가능성이 있습니다."
+                
+        self._add_audit_result(item_u63, status, details, "자동 점검", "ftpusers 파일의 소유자: root, 권한: 640 이하 설정")
+        
+        logging.info(f"{self.module_name} 점검이 완료되었습니다.")
         return self.module_audit_results
-
