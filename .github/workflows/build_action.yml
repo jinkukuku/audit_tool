@@ -64,17 +64,19 @@ jobs:
         with:
           path: ./artifacts
 
+      - name: Create zip package
+        run: |
+          cd artifacts
+          zip -r ../release-package-${{ github.ref_name }}.zip ./*
+
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref_name }}   # push된 태그명 (예: v1.0.0)
+          tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
-          files: |
-            artifacts/**/main*
-            artifacts/**/audit_config.json
-            artifacts/**/audit_modules/**
+          files: release-package-${{ github.ref_name }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
