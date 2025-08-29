@@ -5,3 +5,5 @@ build/
 dist/
 debug.log
 python/
+__pycache__/
+*.pyc
